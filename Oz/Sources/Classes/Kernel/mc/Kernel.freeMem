@@ -1,0 +1,14 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	freeMem				19/4/1998
+;	IN.......: d0=@memBlock d1=blockSize
+;	OUT......: d0=blockSize
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.freeMem
+		movem.l	d1/a0/a1/a6,-(sp)
+		move.l	d0,a1
+		move.l	d1,d0
+		move.l	4.w,a6
+		jsrlib	freeMem
+		movem.l	(sp)+,d1/a0/a1/a6
+		rts

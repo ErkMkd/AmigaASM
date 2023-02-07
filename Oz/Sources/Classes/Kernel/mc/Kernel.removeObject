@@ -1,0 +1,40 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	removeObject			15/10/1998
+;	IN.......: a0=@object
+;	OUT......: -
+;	ERRORS...: -Object in use.
+;		   -"[Classe].destructor" error.
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.removeObject
+		tst.w	object_useCptr(a0)
+		bne.s	.e_use
+		movem.l	d0/d1/a0/a1,-(sp)
+		move.l	object_classe(a0),a1
+		move.l	a0,d0
+		move.l	a1,a0
+	;¡¡¡¡ Destructor:
+		move.l	classe_destructor(a0),d1
+		beq.s	.noDestr
+		move.l	d1,a1
+		jsr	(a1)
+		bcs.s	.e_error
+	;¡¡¡¡ Remove object structure:
+.noDestr	move.l	d0,a1
+		bsr.w	Kernel.removeNode
+		move.l	object_bodySize(a1),d1
+		add.l	#size_object,d1
+		bsr.w	Kernel.freeMem
+.end		movem.l	(sp)+,d0/d1/a0/a1
+		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_use		moveq	#Kernel__Object_in_use,d0
+		stc
+		rts
+
+.e_error	move.l	d0,(sp)
+		movem.l	(sp)+,d0/d1/a0/a1
+		stc
+		rts

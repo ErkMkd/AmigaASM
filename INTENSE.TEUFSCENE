@@ -1,0 +1,290 @@
+;APS00000000000000000000000000000000000000000000000000000000000000000000000000000000
+		include	"workcode:moteur_3d.CinéLO.s"
+Back	incbin	ship.back.fuk
+Pal	incbin	Ship.pal.fuk
+
+
+*----------- Données Scène -----------------*
+Camera			dc.l	bertha
+Scene_objets
+	dc.l	bertha,I_obj,N1_obj,T_obj,E1_Obj,N2_Obj
+	dc.l	S_Obj,E2_Obj
+	dc.l	0
+
+Scene_faces
+	dc.l	I_face1,I_Face2,I_face3
+	dc.l	N1_Face1,N1_Face2,N1_Face3
+	dc.l	T_face1,T_face2,T_face3,T_face4,T_face5
+	dc.l	E1_face1,E1_face2,E1_face3,E1_face4
+	dc.l	N2_Face1,N2_Face2,N2_Face3
+	dc.l	S_Face1,S_face2,S_face3,S_Face4,S_face5,S_face6
+	dc.l	S_Face7,S_face8,S_face9,S_FaceA,S_faceB,S_faceC
+	dc.l	E2_face1,E2_face2,E2_face3,E2_face4
+	dc.l	0
+*--------- Données Objets---------------------*
+
+Bertha	dc.b	0,0		;type,data
+	dc.l	0,0,-8000	;Xpos,Ypos,Zpos
+	dc.l	0,0,0		;alphaX,alphaY,alphaZ
+	dc.l	MoveTable0	;@liste mouvements
+
+I_obj	dc.b	1,0
+	dc.l	-3000,0,0
+	dc.l	0,0,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	13
+	dc.l	I_coords
+	dc.l	0
+
+N1_obj	dc.b	1,0
+	dc.l	-2000,0,0
+	dc.l	0,$10000*256,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	10
+	dc.l	N_coords
+	dc.l	0
+
+T_obj	dc.b	1,0
+	dc.l	-700,0,0
+	dc.l	0,$10000*256*2,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	10
+	dc.l	T_coords
+	dc.l	0
+
+E1_obj	dc.b	1,0
+	dc.l	150,0,0
+	dc.l	0,$10000*256*3,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	12
+	dc.l	E_coords
+	dc.l	0
+
+N2_obj	dc.b	1,0
+	dc.l	1400,0,0
+	dc.l	0,$10000*256*4,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	10
+	dc.l	N_coords
+	dc.l	0
+
+S_obj	dc.b	1,0
+	dc.l	2550,0,0
+	dc.l	0,$10000*256*5,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	27
+	dc.l	S_coords
+	dc.l	0
+
+E2_obj	dc.b	1,0
+	dc.l	3700,0,0
+	dc.l	0,$10000*256*6,0
+	dc.l	MoveTable1
+	dc.l	0
+	dc.w	0,0
+	dc.w	12
+	dc.l	E_coords
+	dc.l	0
+
+
+	*------- Coords ---------*
+I_coords
+	dc.w	-290,-749,0
+	dc.w	320,-859,0
+	dc.w	270,0,0
+	dc.w	350,780,0
+	dc.w	-280,830,0
+	dc.w	-350,0,0
+
+	dc.w	200,-200-1200,000
+	dc.w	250,100-1200,000
+	dc.w	100,250-1200,000
+	dc.w	000,300-1200,000
+	dc.w	-200,200-1200,000
+	dc.w	-250,-100-1200,000
+	dc.w	-100,-300-1200,000
+
+N_Coords
+	dc.w	-200,000,000
+	dc.w	-100,0800,000
+	dc.w	-500,0900,000
+	dc.w	-650,-0750,000
+	dc.w	-300,-0850,000
+	dc.w	0100,-0100,000
+	dc.w	0200,-1000,000
+	dc.w	0600,-1100,000
+	dc.w	0400,0800,000
+	dc.w	0100,0850,000
+
+T_coords
+	dc.w	-0700,-1000,000
+	dc.w	0500,-1100,000
+	dc.w	0550,-0600,000
+	dc.w	0200,-0600,000
+	dc.w	0200,0200,000
+	dc.w	0250,0950,000
+	dc.w	-0350,0950,000
+	dc.w	-0250,0200,000
+	dc.w	-0200,-0600,000
+	dc.w	-0650,-0500,000
+
+E_coords
+	dc.w	-0300,-0900,000
+	dc.w	0600,-1200,000
+	dc.w	0550,-0600,000
+	dc.w	0100,-0650,000
+	dc.w	0180,-0150,000
+	dc.w	0450,-0200,000
+	dc.w	0400,0200,000
+	dc.w	0200,0200,000
+	dc.w	0150,0600,000
+	dc.w	0650,0200,000
+	dc.w	0700,0900,000
+	dc.w	-0300,1050,000
+
+S_Coords
+	dc.w	0550,-1100,000
+	dc.w	0650,-0500,000
+	dc.w	0400,-0600,000
+	dc.w	0150,-0650,000
+	dc.w	-0100,-0600,000
+	dc.w	-0200,-0500,000
+	dc.w	-0250,-0400,000
+	dc.w	-0200,-0300,000
+	dc.w	000,-0250,000
+	dc.w	0400,-0200,000
+	dc.w	0700,-000,000
+	dc.w	0800,0400,000
+	dc.w	0700,0800,000
+	dc.w	0500,1000,000
+	dc.w	-0100,1100,000
+	dc.w	-0650,1100,000
+	dc.w	-0700,0400,000
+	dc.w	-0200,0550,000
+	dc.w	0100,0450,000
+	dc.w	0250,0300,000
+	dc.w	0200,0100,000
+	dc.w	-0100,000,000
+	dc.w	-0300,-0100,000
+	dc.w	-0450,-0400,000
+	dc.w	-0400,-0600,000
+	dc.w	-0200,-0900,000
+	dc.w	0100,-1050,000
+
+	*------- Faces ----------*
+
+o	set	0
+I_Face1	dc.w	0,16,4
+	dc.w	0*Mlt,1*Mlt,2*Mlt,5*Mlt,0*Mlt
+I_Face2	dc.w	0,16,4
+	dc.w	2*Mlt,3*Mlt,4*Mlt,5*Mlt,2*Mlt
+o	set	o+6
+I_face3
+	dc.w	0,16,7
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(2+o)*Mlt,(3+o)*Mlt
+	dc.w	(4+o)*Mlt,(5+o)*Mlt,(6+o)*Mlt,(0+o)*Mlt
+o	set	o+7
+
+N1_Face1	dc.w	0,17,5
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(2+o)*Mlt,(3+o)*Mlt,(4+o)*Mlt,(0+o)*Mlt
+N1_Face2	dc.w	0,17,4
+	dc.w	(0+o)*Mlt,(4+o)*Mlt,(5+o)*Mlt,(9+o)*Mlt,(0+o)*Mlt
+N1_Face3	dc.w	0,17,5
+	dc.w	(5+o)*Mlt,(6+o)*Mlt,(7+o)*Mlt,(8+o)*Mlt,(9+o)*Mlt,(5+o)*Mlt
+o	set	o+10
+
+T_face1	dc.w	0,18,003
+	dc.w	(0+o)*Mlt,(8+o)*Mlt,(9+o)*Mlt,(0+o)*Mlt
+T_face2	dc.w	0,18,004
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(3+o)*Mlt,(8+o)*Mlt,(0+o)*Mlt
+T_face3	dc.w	0,18,003
+	dc.w	(1+o)*Mlt,(2+o)*Mlt,(3+o)*Mlt,(1+o)*Mlt
+T_face4	dc.w	0,18,004
+	dc.w	(3+o)*Mlt,(4+o)*Mlt,(7+o)*Mlt,(8+o)*Mlt,(3+o)*Mlt
+T_face5	dc.w	0,18,004
+	dc.w	(4+o)*Mlt,(5+o)*Mlt,(6+o)*Mlt,(7+o)*Mlt,(4+o)*Mlt
+o	set	o+10
+
+E1_face1	dc.w	0,19,004
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(2+o)*Mlt,(3+o)*Mlt,(0+o)*Mlt
+E1_face2	dc.w	0,19,006
+	dc.w	(0+o)*Mlt,(3+o)*Mlt,(4+o)*Mlt,(7+o)*Mlt,(8+o)*Mlt
+	dc.w	(11+o)*Mlt,(0+o)*Mlt
+E1_face3	dc.w	0,19,004
+	dc.w	(4+o)*Mlt,(5+o)*Mlt,(6+o)*Mlt,(7+o)*Mlt,(4+o)*Mlt
+E1_face4	dc.w	0,19,004
+	dc.w	(8+o)*Mlt,(9+o)*Mlt,(10+o)*Mlt,(11+o)*Mlt,(8+o)*Mlt
+o	set	o+12
+
+N2_Face1	dc.w	0,20,5
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(2+o)*Mlt,(3+o)*Mlt,(4+o)*Mlt,(0+o)*Mlt
+N2_Face2	dc.w	0,20,4
+	dc.w	(0+o)*Mlt,(4+o)*Mlt,(5+o)*Mlt,(9+o)*Mlt,(0+o)*Mlt
+N2_Face3	dc.w	0,20,5
+	dc.w	(5+o)*Mlt,(6+o)*Mlt,(7+o)*Mlt,(8+o)*Mlt,(9+o)*Mlt,(5+o)*Mlt
+o	set	o+10
+
+
+S_face1	dc.w	0,21,004
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(2+o)*Mlt,(26+o)*Mlt,(00+o)*Mlt
+S_face2	dc.w	0,21,004
+	dc.w	(02+o)*Mlt,(03+o)*Mlt,(25+o)*Mlt,(26+o)*Mlt,(02+o)*Mlt
+S_face3	dc.w	0,21,004
+	dc.w	(03+o)*Mlt,(04+o)*Mlt,(24+o)*Mlt,(25+o)*Mlt,(03+o)*Mlt
+S_face4	dc.w	0,21,004
+	dc.w	(04+o)*Mlt,(05+o)*Mlt,(23+o)*Mlt,(24+o)*Mlt,(04+o)*Mlt
+S_face5	dc.w	0,21,003
+	dc.w	(05+o)*Mlt,(06+o)*Mlt,(23+o)*Mlt,(05+o)*Mlt
+S_face6	dc.w	0,21,004
+	dc.w	(06+o)*Mlt,(07+o)*Mlt,(22+o)*Mlt,(23+o)*Mlt,(06+o)*Mlt
+S_face7	dc.w	0,21,004
+	dc.w	(07+o)*Mlt,(08+o)*Mlt,(21+o)*Mlt,(22+o)*Mlt,(07+o)*Mlt
+S_face8	dc.w	0,21,005
+	dc.w	(08+o)*Mlt,(09+o)*Mlt,(10+o)*Mlt,(20+o)*Mlt,(21+o)*Mlt,(08+o)*Mlt
+S_face9	dc.w	0,21,006
+	dc.w	(10+o)*Mlt,(11+o)*Mlt,(12+o)*Mlt,(13+o)*Mlt,(19+o)*Mlt,(20+o)*Mlt,(10+o)*Mlt
+S_faceA	dc.w	0,21,004
+	dc.w	(13+o)*Mlt,(14+o)*Mlt,(18+o)*Mlt,(19+o)*Mlt,(13+o)*Mlt
+S_faceB	dc.w	0,21,004
+	dc.w	(14+o)*Mlt,(15+o)*Mlt,(17+o)*Mlt,(18+o)*Mlt,(14+o)*Mlt
+S_faceC	dc.w	0,21,003
+	dc.w	(15+o)*Mlt,(16+o)*Mlt,(17+o)*Mlt,(15+o)*Mlt
+o	set	o+27
+
+E2_face1	dc.w	0,22,004
+	dc.w	(0+o)*Mlt,(1+o)*Mlt,(2+o)*Mlt,(3+o)*Mlt,(0+o)*Mlt
+E2_face2	dc.w	0,22,006
+	dc.w	(0+o)*Mlt,(3+o)*Mlt,(4+o)*Mlt,(7+o)*Mlt,(8+o)*Mlt
+	dc.w	(11+o)*Mlt,(0+o)*Mlt
+E2_face3	dc.w	0,22,004
+	dc.w	(4+o)*Mlt,(5+o)*Mlt,(6+o)*Mlt,(7+o)*Mlt,(4+o)*Mlt
+E2_face4	dc.w	0,22,004
+	dc.w	(8+o)*Mlt,(9+o)*Mlt,(10+o)*Mlt,(11+o)*Mlt,(8+o)*Mlt
+o	set	o+12
+
+*-------------- Structures mouvmements --------------*
+MoveTable0	dc.l	vector0,Rota1,0
+MoveTable1	dc.l	rota0,0
+
+rota0		dc.b	3,0
+		dc.w	0,0,-40,0,0,0
+
+rota1		dc.b	3,0
+		dc.w	0,0,0,0,0,0
+
+Vector0
+	dc.b	5,%00000000
+	dc.w	0		;vitesse
+	dc.w	0,0,256	;orientation

@@ -1,0 +1,29 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	getErrorMessage			27/1/1999
+;	IN.......: d0=errorCode, a0=@object/classe
+;	OUT......: d0=@errorMessage
+;	ERRORS...: d0=@"Unknown error code"
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.getErrorMessage
+		move.l	a0,-(sp)
+		cmp.l	object_classe(a0),a5
+		beq.s	.classe
+		move.l	object_classe(a0),a0
+.classe		cmp.w	classe_nbrErrors(a0),d0
+		bhi.s	.e_errorCode
+		move.l	classe_errorsTab(a0),a0
+		move.l	(a0,d0.w*4),d0
+		move.l	(sp)+,a0
+		clc
+		rts
+
+	;åååååååååå ERRORS ååååååååååååå
+
+.e_errorCode:	lea	.unknown(pc),a0
+		move.l	a0,d0
+		move.l	(sp)+,a0
+		stc
+		rts
+
+.unknown	dc.b	"Unknown error code",0
+		even

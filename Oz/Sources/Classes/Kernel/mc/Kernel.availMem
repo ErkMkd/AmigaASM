@@ -1,0 +1,25 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	availMem			15/4/1998
+;	IN.......: d1=memType
+;	OUT......: d0=avail
+;	ERRORS...: -Unknown memory type
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.availMem
+		cmp.l	#optimum,d1
+		beq.s	.ok
+		cmp.l	#chip,d1
+		beq.s	.ok
+		cmp.l	#fast,d1
+		bne.s	.e_memType
+.ok		movem.l	d1/a0/a1/a6,-(sp)
+		move.l	4.w,a6
+		jsrlib	availMem
+		movem.l	(sp)+,d1/a0/a1/a6
+		clc
+		rts
+
+	;åååååååååå ERRORS ååååååååååååå
+
+.e_memType:	moveq	#Kernel__Unknown_memory_type,d0
+		stc
+		rts

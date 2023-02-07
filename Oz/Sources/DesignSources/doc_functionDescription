@@ -1,0 +1,12 @@
+================	================
+-SYNOPSIS:
+Types:
+Regs.:
+
+-FONCTION:
+-ENTREES:
+-SORTIE:
+	Carry flag = false
+-ERREURS:
+	Carry flag = true
+	d0 = errorCode:

@@ -1,0 +1,61 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	creatObject			29/11/1998
+;	IN.......: a0=@classe, a1=@objectName, a2=@tagsTab
+;	OUT......: d0=@object
+;	ERRORS...: -Classe have no defined object.
+;		   -Object name already in use.
+;		   -"Kernel.allocMem" error.
+;		   -"Constructor" error.
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.creatObject
+		tst.l	classe_object(a0)
+		beq.s	.e_noObject
+		;¡¡¡¡ Test if object name is already in use:
+		movem.l	d0-a4/a6,-(sp)
+		bsr.w	Kernel.searchObject
+		bcc.s	.e_use
+		;¡¡¡¡ Creat object structure:
+		move.l	classe_object(a0),a2
+		move.l	object_bodySize(a2),d2
+		add.l	#size_object,d2
+		move.l	d2,d0
+		moveq	#optimum,d1
+		bsr.w	Kernel.allocMem
+		bcs.s	.e_error
+		move.l	d0,a3
+.copy		move.b	(a2)+,(a3)+
+		loop32	d2,.copy
+		;¡¡¡¡ Add object in classe objectsList:
+		move.l	d0,a1
+		move.l	9*4(sp),object_node+nd_name(a1)
+		lea	classe_objectsList(a0),a0
+		bsr.w	Kernel.addTail
+		;¡¡¡¡ Call object constructor:
+		move.l	object_classe(a1),a0	;a0=@Classe, a1=@Object
+		move.l	10*4(sp),a2		;a2=@tagsTab
+		move.l	classe_constructor(a0),d0
+		beq.s	.noConst
+		move.l	d0,a3
+		jsr	(a3)
+		bcs.s	.e_error
+		;¡¡¡¡ Zee End:
+.noConst	move.l	a1,(sp)
+		movem.l	(sp)+,d0-a4/a6
+		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_noObject	moveq	#Kernel__Classe_have_no_defined_object,d0
+		stc
+		rts
+
+.e_use		movem.l	(sp)+,d0-a4/a6
+		moveq	#Kernel__Object_name_already_in_use,d0
+		stc
+		rts
+
+.e_error	move.l	d0,(sp)
+		movem.l	(sp)+,d0-a4/a6
+		stc
+		rts

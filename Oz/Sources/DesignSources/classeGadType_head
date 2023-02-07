@@ -1,0 +1,160 @@
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©									©
+;© 		Classe....: \\\	- (gadgetType)			©
+;©									©
+;©		Version...: 1.0 Beta					©
+;©									©
+;©		Code......: Erk						©
+;©									©
+;©		Last rev..: 1999					©
+;©									©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+;	If variable "Material" is true:
+;	 	Physical classe structures & constantes are initialised.
+
+;	If variable "Material" is false:
+;		Only classe constantes are defined.
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©				HISTORY					©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+;V1.0:
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			CLASSE definition				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+	ClasseDef	\\\,noInit,noRem,obj,const,destr,-1,0
+	endcl		\\\
+
+;ЎЎЎЎЎЎЎЎ Errors table ЎЎЎЎЎЎЎЎ
+	ErrorsTab	\\\
+	ERROR	\\\,No_error,noError
+	ERROR	\\\,Gadget_classe_not_mounted,a
+	ende		\\\
+
+;ЎЎЎЎЎЎЎЎ Classe methods table ЎЎЎЎЎЎЎЎ
+	MethodsTab_classe	\\\
+	endMt_classe		\\\
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			OBJECT definition				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+	ObjectDef	\\\
+	BODY	aptr,\\\_Gadget
+	; gadgetDef structure:
+	BODY	base,\\\_gadgetDef
+	BODY	long,\\\_gDef_hunkString,gadgetDef_hunkString
+	BODY	ulong,\\\_gDef_hunkSize,\\\_gDef_end-\\\gDef_name
+	BODY	aptr,\\\_gDef_name,0		;offset
+	BODY	uword,\\\_gDef_funcId,0
+	BODY	word,\\\_gDef_xPos,0
+	BODY	word,\\\_gDef_yPos,0
+	BODY	uword,\\\_gDef_xSize,0
+	BODY	uword,\\\_gDef_ySize,0
+	BODY	word,\\\_gDef_flags,0
+	BODY	ulong,\\\_gDef_disableColor,0
+	BODY	ulong,\\\_gDef_activeColor,0
+	BODY	aptr,\\\_gDef_DisplayName,0	;offset
+	BODY	aptr,\\\_gDef_disableDrawDef,0	;offset
+	BODY	aptr,\\\_gDef_waitingDrawDef,0	;offset
+	BODY	aptr,\\\_gDef_activeDrawDef,0	;offset
+	BODY	aptr,\\\_gDef_disableCode,0	;offset
+	BODY	aptr,\\\_gDef_waitingCode,0	;offset
+	BODY	aptr,\\\_gDef_activeCode,0	;offset
+	; gadget datas (drawDefs scripts, strings...):
+	;BODY
+	BODY	base,\\\_gDef_end
+	endo		\\\
+
+;ЎЎЎЎЎЎЎЎ Object methods table ЎЎЎЎЎЎЎЎ
+	MethodsTab_object	\\\
+	METHOD	\\\,enable		;void()
+	METHOD	\\\,disable		;void()
+	METHOD	\\\,activate		;void()
+	METHOD	\\\,desactivate	;void()
+	METHOD	\\\,setPosition	;void(xPos,yPos)
+	METHOD	\\\,getPosition	;word,word()
+	METHOD	\\\,setSize		;void(xSize,ySize)
+	METHOD	\\\,getSize		;uword,uword()
+	METHOD	\\\,setDisableColor	;void(ulong)
+	METHOD	\\\,getDisableColor	;ulong()
+	METHOD	\\\,setActiveColor	;void(ulong)
+	METHOD	\\\,getActiveColor	;ulong()
+	METHOD	\\\,setDisplay	;void(Display)
+	METHOD	\\\,getDisplay	;aptr()
+	METHOD	\\\,draw		;void()
+	METHOD	\\\,clear		;void()
+	METHOD	\\\,getStatus	;byte()
+	METHOD	\\\,setFuncId	;void(FuncId)
+	METHOD	\\\,getFuncId	;uword()
+	METHOD	\\\,getDisableDrawDef	;aptr()
+	METHOD	\\\,getWaitingDrawDef	;aptr()
+	METHOD	\\\,getActiveDrawDef		;aptr()
+	;ЎЎЎЎ Special routines call:
+	METHOD	\\\,executeDisable	;()
+	METHOD	\\\,executeWaiting	;()
+	METHOD	\\\,executeActive	;()
+	endMt_object		\\\
+
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			Structures definitions				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+;ЎЎЎЎ Tag definitions:
+	TAGS
+	TAG	\\\_\\\Def	;MUST be equal to gad_gadgetDef tag
+
+;	рЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎ¶
+;	ш	structure \\\Def	ш
+;	ЯЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎж
+	STRUC	\\\Def
+	SSTRUC	\\\Def_hunk,objectDef
+	ENDS	\\\Def
+
+	\\\Def_hunkString=""
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			Materials datas					©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+	ifne	material
+;ЎЎЎЎЎЎЎЎ Misc:
+
+;ЎЎЎЎЎЎЎЎ Errors strings:
+\\\.noError	dc.b	"\\\ ok",0
+\\\.a		dc.b	"Gadget classe not mounted",0
+		even
+;ЎЎЎЎЎЎЎЎ Classe methods:
+	include	\\\/mc/\\\.constructor
+	include	\\\/mc/\\\.destructor
+
+;ЎЎЎЎЎЎЎЎ Object methods:
+	include	\\\/mo/\\\.enable
+	include	\\\/mo/\\\.disable
+	include	\\\/mo/\\\.activate
+	include	\\\/mo/\\\.desactivate
+	include	\\\/mo/\\\.setPosition
+	include	\\\/mo/\\\.getPosition
+	include	\\\/mo/\\\.setSize
+	include	\\\/mo/\\\.getSize
+	include	\\\/mo/\\\.setDisableColor
+	include	\\\/mo/\\\.getDisableColor
+	include	\\\/mo/\\\.setActiveColor
+	include	\\\/mo/\\\.getActiveColor
+	include	\\\/mo/\\\.setDisplay
+	include	\\\/mo/\\\.getDisplay
+	include	\\\/mo/\\\.draw
+	include	\\\/mo/\\\.clear
+	include	\\\/mo/\\\.getStatus
+	include	\\\/mo/\\\.setFuncId
+	include	\\\/mo/\\\.getFuncId
+	include	\\\/mo/\\\.getDisableDrawDef
+	include	\\\/mo/\\\.getWaitingDrawDef
+	include	\\\/mo/\\\.getActiveDrawDef
+	include	\\\/mo/\\\.executeDisable
+	include	\\\/mo/\\\.executeWaiting
+	include	\\\/mo/\\\.executeActive
+	endc

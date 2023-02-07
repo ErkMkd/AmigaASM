@@ -1,0 +1,135 @@
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©									©
+;©									©
+;© 		Classe....: Kernel					©
+;©									©
+;©		Version...: 1.1						©
+;©									©
+;©		Code......: Erk						©
+;©									©
+;©		Last rev..: 28/2/1999					©
+;©									©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			CLASSE definition				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+	ClasseDef	Kernel,init,rem,noObj,noConst,noDestr,1,1
+	BODY	aptr,Kernel_saveLevel7,0
+	endcl		Kernel
+
+;ЎЎЎЎЎЎЎЎ Classe methods table ЎЎЎЎЎЎЎЎ
+	MethodsTab_classe	Kernel
+	METHOD	Kernel,allocMem		;aptr(blockSize,memType)
+	METHOD	Kernel,freeMem		;int(memBlock,blockSize)
+	METHOD	Kernel,availMem		;int(memType)
+	METHOD	Kernel,addHead		;void(listHeader,node)
+	METHOD	Kernel,addTail		;void(listHeader,node)
+	METHOD	Kernel,insert		;void(nodeSuiv,node)
+	METHOD	Kernel,remHead		;void(listHeader)
+	METHOD	Kernel,remTail		;void(listHeader)
+	METHOD	Kernel,removeNode	;void(node)
+	METHOD	Kernel,searchNode	;aptr(listHeader,nodeName)
+	METHOD	Kernel,creatClasse	;aptr(classeDef)
+	METHOD	Kernel,removeClasse	;void(classe)
+	METHOD	Kernel,searchClasse	;aptr(classeName)
+	METHOD	Kernel,getClasse	;aptr(object)
+	METHOD	Kernel,getVersion	;int(object)
+	METHOD	Kernel,getErrorMessage	;aptr(errorCode,object)
+	METHOD	Kernel,creatObject	;aptr(class,objectName,tagsTab)
+	METHOD	Kernel,removeObject	;void(object)
+	METHOD	Kernel,searchObject	;aptr(classe,objectName)
+	METHOD	Kernel,useObject	;void(object)
+	METHOD	Kernel,unuseObject	;void(object)
+	METHOD	Kernel,loadClasse	;aptr,ulong(classeName)
+	METHOD	Kernel,showErrorInWb	;(object,errorCode)
+	METHOD	Kernel,enableCache	;long(bits,mask)
+	METHOD	Kernel,disableCache	;long(bits,mask)
+	endMt_classe	Kernel
+
+;ЎЎЎЎЎЎЎЎ Errors table ЎЎЎЎЎЎЎЎ
+	ErrorsTab	Kernel
+	ERROR	Kernel,no_error,a
+	ERROR	Kernel,Unknown_memory_type,b
+	ERROR	Kernel,Not_enough_memory,c
+	ERROR	Kernel,Node_not_found,d
+	ERROR	Kernel,Classe_not_found,e
+	ERROR	Kernel,Object_name_already_in_use,f
+	ERROR	Kernel,Object_not_found,g
+	ERROR	Kernel,Object_in_use,h
+	ERROR	Kernel,Cant_remove_all_objects,i
+	ERROR	Kernel,Classe_have_no_defined_object,j
+	ERROR	Kernel,Classe_already_exists,k
+	ERROR	Kernel,Classe_already_removed,l
+	ERROR	Kernel,ClasseFile_not_found,m
+	ERROR	Kernel,ClasseFile_empty,n
+	ende	Kernel
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©		Structure/constantes definitions			©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+	;ЎЎЎЎ Tag item structure definition:
+	; (It's too small to need use of "STRUC" macro)
+	ifnd	ti_tag
+	ti_tag=0
+	endc
+	ifnd	ti_data
+	ti_data=4
+	endc
+
+	;ЎЎЎЎ "End of tagsTab" tag:
+	ifnd	tag_done
+	tag_done=0
+	endc
+
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			Materials datas					©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+	ifne	material
+;ЎЎЎЎЎЎЎЎ Errors strings:
+Kernel.a	dc.b	"Kernel ok",0
+Kernel.b	dc.b	"Unknown memory type",0
+Kernel.c	dc.b	"Not enough memory",0
+Kernel.d	dc.b	"Node not found",0
+Kernel.e	dc.b	"Classe not found",0
+Kernel.f	dc.b	"Object name already in use",0
+Kernel.g	dc.b	"Object not found",0
+Kernel.h	dc.b	"Object in use",0
+Kernel.i	dc.b	"Can't remove all objects",0
+Kernel.j	dc.b	"Classe have no defined object",0
+Kernel.k	dc.b	"Classe already exists",0
+Kernel.l	dc.b	"Classe already removed",0
+Kernel.m	dc.b	"ClasseFile not found",0
+Kernel.n	dc.b	"ClasseFile empty",0
+		even
+;ЎЎЎЎЎЎЎЎ Classe methods:
+	include	Kernel/mc/Kernel.init
+	include	Kernel/mc/Kernel.remove
+	include	Kernel/mc/Kernel.addHead
+	include	Kernel/mc/Kernel.addTail
+	include	Kernel/mc/Kernel.allocMem
+	include	Kernel/mc/Kernel.availMem
+	include	Kernel/mc/Kernel.creatClasse
+	include	Kernel/mc/Kernel.creatObject
+	include	Kernel/mc/Kernel.freeMem
+	include	Kernel/mc/Kernel.getClasse
+	include	Kernel/mc/Kernel.getErrorMessage
+	include	Kernel/mc/Kernel.getVersion
+	include	Kernel/mc/Kernel.insert
+	include	Kernel/mc/Kernel.remHead
+	include	Kernel/mc/Kernel.removeNode
+	include	Kernel/mc/Kernel.removeClasse
+	include	Kernel/mc/Kernel.removeObject
+	include	Kernel/mc/Kernel.remTail
+	include	Kernel/mc/Kernel.searchClasse
+	include	Kernel/mc/Kernel.searchNode
+	include	Kernel/mc/Kernel.searchObject
+	include	Kernel/mc/Kernel.unuseObject
+	include	Kernel/mc/Kernel.useObject
+	include	Kernel/mc/Kernel.loadClasse
+	include	Kernel/mc/Kernel.showErrorInWb
+	include	Kernel/mc/Kernel.enableCache
+	include	Kernel/mc/Kernel.disableCache
+	endc

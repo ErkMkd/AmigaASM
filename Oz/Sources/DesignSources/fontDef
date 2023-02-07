@@ -1,0 +1,42 @@
+;µåååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååå®
+;©	FONT: \\\						1999	©
+;¤ååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååååþ
+fontDef.\\\
+;¡¡¡¡¡¡¡¡¡¡¡ Font Parameters ¡¡¡¡¡¡¡¡¡¡¡¡
+		.xSize=8
+		.ySize=8
+		.baseLine=6
+		.xSpace=6
+		.loChar=32
+		.hiChar=127
+		.modulo=8*15		;=>MUST be multiple of .xSize
+
+;¡¡¡¡¡¡¡¡¡¡ Font datas ¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+	.x=(.modulo+.xSize)/.xSize
+	.y=(.hiChar-.loChar+1)/.x
+	;¡¡¡¡ fontDef structure:
+.FONT		dc.l	"FONT"
+.name		dc.l	.ascii-.FONT
+._xSize		dc.w	.xSize	;!!! Multiple de 8 !!!
+._ySize		dc.w	.ySize
+._baseLine	dc.w	6
+._loChar	dc.b	.lochar
+._hiChar	dc.b	.hichar
+._modulo	dc.w	.modulo
+.charLocTab	dc.l	.locTab-.FONT
+.charSpaceTab	dc.l	.spaceTab-.FONT
+.charDataTab	dc.l	.dataTab-.FONT
+	;¡¡¡¡ Tables:
+.spaceTab	dcb.w	.hichar-.lochar+1,.xSpace
+.dataTab	incbin	bpl/\\\.bpl
+.locTab
+.cOf7	set	0
+	rept	.y
+	rept	.x
+	dc.w	.cOf7,.xSize	;bitsOffset,bitsSize
+.cOf7	set	.cOf7+.xSize
+	endr
+.cOf7	set	.cOf7+(.xSize+.modulo)*(.ySize-1)
+	endr
+.ascii		dc.b	"\\\",0
+		even

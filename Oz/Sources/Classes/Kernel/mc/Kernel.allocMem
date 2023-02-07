@@ -1,0 +1,32 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	allocMem			15/4/1998
+;	IN.......: d0=blockSize, d1=memType
+;	OUT......: d0=@memBlock
+;	ERRORS...:  -Unknown memory type
+;		    -Not enough memory
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.allocMem
+		cmp.l	#optimum,d1
+		beq.s	.ok
+		cmp.l	#chip,d1
+		beq.s	.ok
+		cmp.l	#fast,d1
+		bne.s	.e_memType
+.ok		movem.l	d1/a0/a1/a6,-(sp)
+		move.l	4.w,a6
+		jsrlib	allocMem
+		movem.l	(sp)+,d1/a0/a1/a6
+		tst.l	d0
+		beq.s	.e_memory
+		clc
+		rts
+
+	;åååååååååå ERRORS ååååååååååååå
+
+.e_memType:	moveq	#Kernel__Unknown_memory_type,d0
+		stc
+		rts
+
+.e_memory:	moveq	#Kernel__Not_enough_memory,d0
+		stc
+		rts

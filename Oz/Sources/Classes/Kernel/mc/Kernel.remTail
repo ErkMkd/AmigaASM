@@ -1,0 +1,16 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	remTail				15/4/1998
+;	IN.......: a0=@listHeader
+;	OUT......: -
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.remTail
+		movem.l	d0/a0/a1,-(sp)
+		move.l	lh_last(a0),a1
+		move.l	nd_prec(a1),d0
+		beq.s	.empty
+		move.l	d0,lh_last(a0)
+		move.l	nd_prec(a1),a0
+		move.l	nd_suiv(a1),nd_suiv(a0)
+.empty		movem.l	(sp)+,d0/a0/a1
+		rts

@@ -1,0 +1,16 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	addTail				15/4/1998
+;	IN.......: a0=@listHeader , a1=@node
+;	OUT......: -
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.addTail
+		move.l	a6,-(sp)
+		move.l	lh_last(a0),a6
+		move.l	a1,lh_last(a0)
+		move.l	a1,nd_suiv(a6)
+		move.l	a6,nd_prec(a1)
+		move.l	a0,nd_suiv(a1)
+		addq.l	#lh_tail,nd_suiv(a1)
+		move.l	(sp)+,a6
+		rts

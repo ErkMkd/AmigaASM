@@ -1,0 +1,14 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	removeNode				15/4/1998
+;	IN.......: a1=@node
+;	OUT......: -
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.removeNode
+		movem.l	a1/a6,-(sp)
+		move.l	nd_suiv(a1),a6
+		move.l	nd_prec(a1),a1
+		move.l	a6,nd_suiv(a1)
+		move.l	a1,nd_prec(a6)
+		movem.l	(sp)+,a1/a6
+		rts

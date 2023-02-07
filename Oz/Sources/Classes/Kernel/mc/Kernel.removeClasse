@@ -1,0 +1,70 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	removeClasse			24/1/1999
+;	IN.......: a0=@classe
+;	OUT......: -
+;	ERRORS...: -Classe already removed.
+;		   -Can't remove all objects.
+;		   -"[Classe].remove" error.
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.removeClasse
+		movem.l	d0-d2/a0-a2,-(sp)
+	;¡¡¡¡ Test if exists:
+		move.l	nd_name(a0),a1
+		bsr.w	Kernel.searchClasse
+		bcs.s	.e_removed
+	;¡¡¡¡ Remove objects:
+		move.l	a0,a2
+		clr.l	d1
+.strtPass	lea	classe_objectsList(a2),a1
+		move.l	d1,d2
+		clr.l	d1
+.object		move.l	lh_first(a1),a0
+		tst.l	(a0)
+		beq.s	.endPass
+		bsr.w	Kernel.removeObject
+		bcc.s	.object
+		addq.l	#1,d1
+		move.l	a0,a1
+		lea	classeDef.Kernel(pc),a5
+		bra.s	.object
+.endPass	tst.l	d1
+		beq.s	.ok
+		cmp.l	d1,d2
+		bne.s	.strtPass
+		bra.s	.e_remove
+.ok	;¡¡¡¡ "Remove" method:
+		move.l	a2,a0
+		tst.l	classe_remove(a0)
+		beq.s	.remNode
+		move.l	classe_remove(a0),a1
+		jsr	(a1)
+		bcs.s	.e_error
+	;¡¡¡¡ Remove from Kernel list:
+.remNode	move.l	a0,a1
+		bsr.w	Kernel.removeNode
+	;¡¡¡¡ Free classe buffer:
+		move.l	classe_bufferSize(a2),d1
+		beq.s	.end
+		move.l	a2,d0
+		bsr.w	Kernel.freeMem
+	;¡¡¡¡ Zee End:
+.end		movem.l	(sp)+,d0-d2/a0-a2
+		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_removed	movem.l	(sp)+,d0-d2/a0-a2
+		moveq	#Kernel__Classe_already_removed,d0
+		stc
+		rts
+
+.e_remove	movem.l	(sp)+,d0-d2/a0-a2
+		moveq	#Kernel__Cant_remove_all_objects,d0
+		stc
+		rts
+
+.e_error	move.l	d0,(sp)
+		movem.l	(sp)+,d0-d2/a0-a2
+		stc
+		rts

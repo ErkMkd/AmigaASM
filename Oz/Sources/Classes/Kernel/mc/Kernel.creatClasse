@@ -1,0 +1,96 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	creatClasse			24/1/1999
+;	IN.......: a0=@classeDef structure
+;	OUT......: -
+;	ERRORS...: -Classe already exists.
+;		   -"[Classe].init" error.
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.creatClasse
+		movem.l	d0/d1/a0/a1,-(sp)
+	;¡¡¡¡ Set name offset:
+		move.l	a0,d0
+		add.l	d0,nd_name(a0)
+	;¡¡¡¡ Test if already exists:
+		move.l	nd_name(a0),a1
+		bsr.w	Kernel.searchClasse
+		bcc.w	.e_exists
+		move.l	a0,d0
+	;¡¡¡¡ Set "object_classe" field filled with Kernel base:
+		move.l	a5,object_classe(a0)
+	;¡¡¡¡ Clear "classe_bufferSize" field:
+		clr.l	classe_bufferSize(a0)
+	;¡¡¡¡ Set "remove" method @:
+.remove		tst.l	classe_remove(a0)
+		beq.s	.constr
+		add.l	d0,classe_remove(a0)
+	;¡¡¡¡ Set "constructor" @:
+.constr		tst.l	classe_constructor(a0)
+		beq.s	.destr
+		add.l	d0,classe_constructor(a0)
+	;¡¡¡¡ Set "destructor" @:
+.destr		tst.l	classe_destructor(a0)
+		beq.s	.methodsTab
+		add.l	d0,classe_destructor(a0)
+	;¡¡¡¡ Set classe methods table:
+.methodsTab	move.w	object_nbrMethods(a0),d1
+		beq.s	.errorsTab
+		subq.w	#1,d1
+		add.l	d0,object_methodsTab(a0)
+		move.l	object_methodsTab(a0),a1
+.methods	add.l	d0,(a1)+
+		dbra	d1,.methods
+	;¡¡¡¡ Set classe errors table:
+.errorsTab	move.w	classe_nbrErrors(a0),d1
+		beq.s	.objectsList
+		subq.w	#1,d1
+		add.l	d0,classe_errorsTab(a0)
+		move.l	classe_errorsTab(a0),a1
+.errors		add.l	d0,(a1)+
+		dbra	d1,.errors
+	;¡¡¡¡ Init objects listHeader:
+.objectsList	lea	classe_objectsList(a0),a1
+		add.l	d0,lh_first(a1)
+		add.l	d0,lh_last(a1)
+	;¡¡¡¡ Set object @:
+.object		tst.l	classe_object(a0)
+		beq.s	.addClasse
+		add.l	d0,classe_object(a0)
+		move.l	classe_object(a0),a1
+		;¡¡¡¡ Set object_classe field:
+		add.l	d0,object_classe(a1)
+		;¡¡¡¡ Set object methods table:
+		move.w	object_nbrMethods(a1),d1
+		beq.s	.addClasse
+		subq.w	#1,d1
+		add.l	d0,object_methodsTab(a1)
+		move.l	object_methodsTab(a1),a1
+.objMethods	add.l	d0,(a1)+
+		dbra	d1,.objMethods
+	;¡¡¡¡ Add classe in Kernel list:
+.addClasse	move.l	a0,a1
+		lea	classe_objectsList(a5),a0
+		bsr.w	Kernel.addTail
+	;¡¡¡¡ Set Init method addresse:
+.init		move.l	a1,a0
+		tst.l	classe_init(a0)
+		beq.s	.end
+		add.l	d0,classe_init(a0)
+		move.l	classe_init(a0),a1
+		jsr	(a1)
+		bcs.s	.e_error
+	;¡¡¡¡ Zee End:
+.end		movem.l	(sp)+,d0/d1/a0/a1
+		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_exists	movem.l	(sp)+,d0/d1/a0/a1
+		moveq	#Kernel__Classe_already_exists,d0
+		stc
+		rts
+
+.e_error	move.l	d0,(sp)
+		movem.l	(sp)+,d0/d1/a0/a1
+		stc
+		rts

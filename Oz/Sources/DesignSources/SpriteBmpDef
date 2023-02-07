@@ -1,0 +1,21 @@
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©	SpriteBmp: \\\					1999		©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+SpriteBmpDef.\\\
+.SPRT		dc.l	"SPRT"
+.BMAPid		dc.l	"BMAP"
+.xSize		dc.w	0	;!!! Multiple of 16 !!!
+.ySize		dc.w	0
+.nbrBpls	dc.w	0
+.nbrFrames	dc.w	0
+.maskLocTab	dc.l	.maskLoc-.SPRT
+.bMapLocTab	dc.l	.bMapLoc-.SPRT
+.maskTab	dc.l	.mask-.SPRT
+.bMapTab	dc.l	.bMap-.SPRT
+.palette	dc.l	.pal-.SPRT
+
+.maskLoc	dc.l	0	;frames bitOffsets
+.bmapLoc	dc.l	0	;frames bitOffsets
+.mask		incbin	mask/\\\.mask
+.bMap		incbin	bmap/\\\.bmap
+.pal		incbin	pal/\\\.pal

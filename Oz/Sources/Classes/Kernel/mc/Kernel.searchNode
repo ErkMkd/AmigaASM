@@ -1,0 +1,32 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	searchNode			15/4/1998
+;	IN.......: a0=@listHeader , a1=@nodeName
+;	OUT......: d0=@node
+;	ERRORS...: -Node not found
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.searchNode
+		movem.l	a0-a3,-(sp)
+		cmp.l	#0,a1
+		beq.s	.e_notFound
+.trace		move.l	nd_suiv(a0),a0
+		tst.l	(a0)
+		beq.s	.e_notFound
+		move.l	nd_name(a0),d0
+		beq.s	.trace
+		move.l	d0,a2
+		move.l	a1,a3
+.suiv		cmpm.b	(a2)+,(a3)+
+		bne.s	.trace
+		tst.b	-1(a2)
+		bne.s	.suiv
+		move.l	a0,d0
+		movem.l	(sp)+,a0-a3
+.end		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_notFound	moveq	#Kernel__Node_not_found,d0
+		movem.l	(sp)+,a0-a3
+		stc
+		rts

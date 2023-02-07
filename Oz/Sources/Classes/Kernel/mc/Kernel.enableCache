@@ -1,0 +1,13 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:		enableCache		28/2/1999
+;	IN.......: d0=bits
+;	OUT......: d0=oldBits
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.enableCache
+		movem.l	d1/a0/a1/a6,-(sp)
+		move.l	4.w,a6
+		move.l	d0,d1
+		jsrLib	cacheControl
+		movem.l	(sp)+,d1/a0/a1/a6
+		rts

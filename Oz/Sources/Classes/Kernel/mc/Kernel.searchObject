@@ -1,0 +1,21 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	searchObject			10/10/1998
+;	IN.......: a0=@classe, a1=@objectName
+;	OUT......: d0=@object
+;	ERRORS...: -Object not found
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.searchObject
+		move.l	a0,-(sp)
+		lea	classe_objectsList(a0),a0
+		bsr.w	Kernel.searchNode
+		bcs.s	.e_notFound
+		move.l	(sp)+,a0
+		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_notFound	move.l	(sp)+,a0
+		moveq	#Kernel__Object_not_found,d0
+		stc
+		rts

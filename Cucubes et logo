@@ -1,0 +1,281 @@
+;APS00001B3200001B3200001B3200001B3200001B3200001B3200001B3200001B3200001B3200001B32
+Back	incbin	ship.back.fuk
+Pal	incbin	Ship.pal.fuk
+
+*----------- Données Scène -----------------*
+Camera			dc.l	bertha
+	Nbrcubes=40
+	affiche_vaisseau=0
+
+Scene_objets
+	dc.l	Traject0
+	dc.l	Bertha
+	ifne	affiche_vaisseau
+	dc.l	vaisseau
+	endc
+
+ofs	set	0
+	rept	Nbrcubes
+	dc.l	Objets+ofs
+ofs	set	ofs+48
+	endr
+
+	dc.l	0
+
+Scene_faces
+;	dc.l	I0,I1,I2,I3,I4,I5,I6,I7,I8,I9,I10,I11,I12,I13
+;	dc.l	I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24,I25,I26
+
+
+	ifne	affiche_vaisseau
+	dc.l	Of1,Of2,Of3,Of4,Of5,Of6,Of7,Of8,Of9,Ofa
+	endc
+
+ofs	set	0
+	rept	Nbrcubes*6
+	dc.l	faces+ofs
+ofs	set	ofs+16
+	endr
+
+	dc.l	0
+
+*--------- Données Objets---------------------*
+
+Bertha	dc.b	0,0		;type,data
+	dc.l	0,0,-500	;Xpos,Ypos,Zpos
+	dc.l	0,0,0		;alphaX,alphaY,alphaZ
+	dc.l	MoveTable0	;@liste mouvements
+
+Objets
+x	set	0
+z	set	3000
+al	set	0
+bl	set	1024
+cl	set	0
+	rept	nbrcubes
+	dc.b	1,0		;type,data
+	dc.l	x,0,z		;Xpos,Ypos,Zpos
+	dc.w	al,0,bl,0,cl,0	;Ax,Ay,Az	;angles d'inclinaison
+	dc.l	Movetable1	;@ Tables/Strucures Mouvements
+	dc.l	0		;poid
+	dc.w	0,0		;Nbrframes,FramePtr
+	dc.w	8		;Nombre de points
+	dc.l	Pata1		;@ Table des points
+	dc.l	0		;@ Table des bobs "Longue Distance"
+x	set	x+100
+z	set	z-50
+al	set	al+100	;800
+bl	set	bl+101	;1013
+cl	set	cl+120	;581
+	endr
+Vaisseau
+	dc.b	1,0
+	dc.l	0,0,3000
+	dc.l	0,0,0
+	dc.l	Movetable3
+	dc.l	0
+	dc.w	0,0
+	dc.w	012
+	dc.l	Tbl_Coords_Obj000
+	dc.l	0
+Logo
+	dc.b	1,0
+    	dc.l	0,0,150000
+	dc.l	0,0,0
+	dc.l	movetable2
+	dc.l	0
+	dc.w	0,0
+	dc.w	030
+	dc.l	Its_coords
+	dc.l	0
+
+Its_coords
+	dc.w	-30000,-30000,08000
+	dc.w	30000,-30000,08000
+	dc.w	05000,25000,08000
+	dc.w	30000,25000,08000
+	dc.w	30000,30000,08000
+	dc.w	-30000,30000,08000
+	dc.w	-30000,25000,08000
+	dc.w	-05000,25000,08000
+	dc.w	-20000,-25000,08000
+	dc.w	20000,-25000,08000
+	dc.w	12200,-05000,08000
+	dc.w	-12200,-05000,08000
+	dc.w	10000,00000,08000
+	dc.w	-10000,00000,08000
+	dc.w	00000,20000,08000
+	dc.w	-30000,-30000,-08000
+	dc.w	30000,-30000,-08000
+	dc.w	05000,25000,-08000
+	dc.w	30000,25000,-08000
+	dc.w	30000,30000,-08000
+	dc.w	-30000,30000,-08000
+	dc.w	-30000,25000,-08000
+	dc.w	-05000,25000,-08000
+	dc.w	-20000,-25000,-08000
+	dc.w	20000,-25000,-08000
+	dc.w	12200,-05000,-08000
+	dc.w	-12200,-05000,-08000
+	dc.w	10000,00000,-08000
+	dc.w	-10000,00000,-08000
+	dc.w	00000,20000,-08000
+
+Pata1	dc.w	100,100,-100	;coords
+	dc.w	100,-100,-100
+	dc.w	-100,-100,-100
+	dc.w	-100,100,-100
+	dc.w	100,100,100
+	dc.w	100,-100,100
+	dc.w	-100,-100,100
+	dc.w	-100,100,100
+
+Tbl_Coords_Obj000
+	dc.w	-300,-200,-600
+	dc.w	-500,-100,-600
+	dc.w	-500,100,-600
+	dc.w	-300,200,-600
+	dc.w	300,200,-600
+	dc.w	500,100,-600
+	dc.w	500,-100,-600
+	dc.w	300,-200,-600
+	dc.w	-200,-060,900
+	dc.w	-200,060,700
+	dc.w	200,-060,900
+	dc.w	200,060,700
+
+o	set	0
+
+	ifne	Affiche_vaisseau
+
+Of1	dc.w	0,64,008,(000+o)*Mlt,(007+o)*Mlt,(006+o)*Mlt,(005+o)*Mlt
+	dc.w	(004+o)*Mlt,(003+o)*Mlt,(002+o)*Mlt,(001+o)*Mlt,(000+o)*Mlt
+Of2	dc.w	0,60,004,(006+o)*Mlt,(010+o)*Mlt,(011+o)*Mlt,(005+o)*Mlt,(006+o)*Mlt
+Of3	dc.w	0,59,004,(001+o)*Mlt,(002+o)*Mlt,(009+o)*Mlt,(008+o)*Mlt,(001+o)*Mlt
+Of4	dc.w	0,58,004,(000+o)*Mlt,(008+o)*Mlt,(010+o)*Mlt,(007+o)*Mlt,(000+o)*Mlt
+Of5	dc.w	0,34,004,(003+o)*Mlt,(004+o)*Mlt,(011+o)*Mlt,(009+o)*Mlt,(003+o)*Mlt
+Of6	dc.w	0,37,003,(007+o)*Mlt,(010+o)*Mlt,(006+o)*Mlt,(007+o)*Mlt
+Of7	dc.w	0,38,003,(005+o)*Mlt,(011+o)*Mlt,(004+o)*Mlt,(005+o)*Mlt
+Of8	dc.w	0,39,003,(002+o)*Mlt,(003+o)*Mlt,(009+o)*Mlt,(002+o)*Mlt
+Of9	dc.w	0,40,003,(000+o)*Mlt,(001+o)*Mlt,(008+o)*Mlt,(000+o)*Mlt
+Ofa	dc.w	0,33,004,(008+o)*Mlt,(009+o)*Mlt,(011+o)*Mlt,(010+o)*Mlt,(008+o)*Mlt
+	o	set	o+12
+
+	endc
+
+Faces
+cl	set	16
+	rept	Nbrcubes
+	dc.w	0,cl,4, (1+o)*Mlt,(0+o)*Mlt,(3+o)*Mlt,(2+o)*Mlt,(1+o)*Mlt
+	dc.w	0,cl+1,4, (1+o)*Mlt,(5+o)*Mlt,(4+o)*Mlt,(0+o)*Mlt,(1+o)*Mlt
+	dc.w	0,cl+2,4, (2+o)*Mlt,(3+o)*Mlt,(7+o)*Mlt,(6+o)*Mlt,(2+o)*Mlt
+	dc.w	0,cl+3,4, (1+o)*Mlt,(2+o)*Mlt,(6+o)*Mlt,(5+o)*Mlt,(1+o)*Mlt
+	dc.w	0,cl+4,4, (3+o)*Mlt,(0+o)*Mlt,(4+o)*Mlt,(7+o)*Mlt,(3+o)*Mlt
+	dc.w	0,cl+5,4, (5+o)*Mlt,(6+o)*Mlt,(7+o)*Mlt,(4+o)*Mlt,(5+o)*Mlt
+o	set	o+8
+;cl	set	cl+6
+	endr
+
+I0	dc.w	0,16,004
+	dc.w	(001+o)*mlt,(009+o)*mlt,(014+o)*mlt,(002+o)*mlt,(001+o)*mlt
+I1	dc.w	0,17,004
+	dc.w	(000+o)*mlt,(008+o)*mlt,(009+o)*mlt,(001+o)*mlt,(000+o)*mlt
+I2	dc.w	0,18,004
+	dc.w	(000+o)*mlt,(007+o)*mlt,(014+o)*mlt,(008+o)*mlt,(000+o)*mlt
+I3	dc.w	0,19,003
+	dc.w	(002+o)*mlt,(014+o)*mlt,(007+o)*mlt,(002+o)*mlt
+I4	dc.w	0,20,004
+	dc.w	(003+o)*mlt,(006+o)*mlt,(005+o)*mlt,(004+o)*mlt,(003+o)*mlt
+I5	dc.w	0,21,004
+	dc.w	(010+o)*mlt,(011+o)*mlt,(013+o)*mlt,(012+o)*mlt,(010+o)*mlt
+I6	dc.w	0,22,004
+	dc.w	(015+o)*mlt,(016+o)*mlt,(024+o)*mlt,(023+o)*mlt,(015+o)*mlt
+I7	dc.w	0,23,004
+	dc.w	(015+o)*mlt,(023+o)*mlt,(029+o)*mlt,(022+o)*mlt,(015+o)*mlt
+I8	dc.w	0,24,004
+	dc.w	(016+o)*mlt,(017+o)*mlt,(029+o)*mlt,(024+o)*mlt,(016+o)*mlt
+I9	dc.w	0,25,003
+	dc.w	(017+o)*mlt,(022+o)*mlt,(029+o)*mlt,(017+o)*mlt
+I10	dc.w	0,26,004
+	dc.w	(025+o)*mlt,(027+o)*mlt,(028+o)*mlt,(026+o)*mlt,(025+o)*mlt
+I11	dc.w	0,27,004
+	dc.w	(018+o)*mlt,(019+o)*mlt,(020+o)*mlt,(021+o)*mlt,(018+o)*mlt
+I12	dc.w	0,28,004
+	dc.w	(004+o)*mlt,(005+o)*mlt,(020+o)*mlt,(019+o)*mlt,(004+o)*mlt
+I13	dc.w	0,29,004
+	dc.w	(002+o)*mlt,(003+o)*mlt,(018+o)*mlt,(017+o)*mlt,(002+o)*mlt
+I14	dc.w	0,30,004
+	dc.w	(006+o)*mlt,(007+o)*mlt,(022+o)*mlt,(021+o)*mlt,(006+o)*mlt
+I15	dc.w	0,31,004
+	dc.w	(000+o)*mlt,(015+o)*mlt,(022+o)*mlt,(007+o)*mlt,(000+o)*mlt
+I16	dc.w	0,30,004
+	dc.w	(001+o)*mlt,(002+o)*mlt,(017+o)*mlt,(016+o)*mlt,(001+o)*mlt
+I17	dc.w	0,29,004
+	dc.w	(003+o)*mlt,(004+o)*mlt,(019+o)*mlt,(018+o)*mlt,(003+o)*mlt
+I18	dc.w	0,28,004
+	dc.w	(005+o)*mlt,(006+o)*mlt,(021+o)*mlt,(020+o)*mlt,(005+o)*mlt
+I19	dc.w	0,27,004
+	dc.w	(000+o)*mlt,(001+o)*mlt,(016+o)*mlt,(015+o)*mlt,(000+o)*mlt
+I20	dc.w	0,26,004
+	dc.w	(008+o)*mlt,(023+o)*mlt,(024+o)*mlt,(009+o)*mlt,(008+o)*mlt
+I21	dc.w	0,25,004
+	dc.w	(009+o)*mlt,(024+o)*mlt,(025+o)*mlt,(010+o)*mlt,(009+o)*mlt
+I22	dc.w	0,24,004
+	dc.w	(008+o)*mlt,(011+o)*mlt,(026+o)*mlt,(023+o)*mlt,(008+o)*mlt
+I23	dc.w	0,23,004
+	dc.w	(010+o)*mlt,(025+o)*mlt,(026+o)*mlt,(011+o)*mlt,(010+o)*mlt
+I24	dc.w	0,22,004
+	dc.w	(012+o)*mlt,(013+o)*mlt,(028+o)*mlt,(027+o)*mlt,(012+o)*mlt
+I25	dc.w	0,21,004
+	dc.w	(013+o)*mlt,(014+o)*mlt,(029+o)*mlt,(028+o)*mlt,(013+o)*mlt
+I26	dc.w	0,20,004
+	dc.w	(012+o)*mlt,(027+o)*mlt,(029+o)*mlt,(014+o)*mlt,(012+o)*mlt
+o	set	o+30
+
+
+
+
+*-------------- Structures mouvmements --------------*
+MoveTable0	dc.l	vector2,0
+MoveTable1	dc.l	vector1,rota1,0
+MoveTable2	dc.l	Rota2,0
+MoveTable3	dc.l	rota3,vector0,0
+
+Rota1		dc.b	3,0
+		dc.w	16,0,12,0,14,0
+
+Rota2		dc.b	3,0
+		dc.w	2,0,8,0,4,0
+
+Rota3		dc.b	3,0
+		dc.w	0,0,0,0,15,0
+
+Traject0
+	dc.b	4,%00000111
+	dc.w	0,3		;EtapesPtr,NbrEtapes
+	dc.l	0,0,0
+	dc.l	0,0,0
+	dc.l	0,0,0		;StartPos
+	dc.w	80,0		;NbrFrames,FramesPtr
+	dc.l	1000,0,-2500	;EndPos
+	dc.w	80,0		;NbrFrames,FramesPtr
+	dc.l	-1000,0,-2500	;EndPos
+	dc.w	80,0		;NbrFrames,FramesPtr
+	dc.l	0,0,0	;EndPos
+
+
+Vector0
+	dc.b	5,%00000000
+	dc.w	10		;vitesse
+	dc.w	0,0,256	;orientation
+
+Vector1
+	dc.b	5,%00000000
+	dc.w	20		;vitesse
+	dc.w	0,0,256	;orientation
+
+Vector2
+	dc.b	5,%1
+	dc.w	0
+	dc.w	0,0,256
+

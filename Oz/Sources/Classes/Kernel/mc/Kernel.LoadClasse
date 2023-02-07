@@ -1,0 +1,124 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:		loadClasse			26/1/1999
+;	IN.......: a1=@classeName
+;	OUT......: a0=@Classe, d0=bufferSize
+;	ERRORS...: -ClasseFile not found.
+;		   -ClasseFile empty.
+;		   -Not enough memory.
+;		   -"Kernel.creatClasse" error.
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.loadClasse
+		movem.l	d0-d3/a0-a3/a6,-(sp)
+	;¡¡¡¡ Disable data cache:
+		move.l	4.w,a6
+		clr.l	d0
+		move.l	#%100000000,d1
+		JsrLib	CacheControl
+	;¡¡¡¡ Open dos.library:
+		move.l	4.w,a6
+		lea	.dosName(pc),a1
+		clr.l	d0
+		jsrLib	OpenLibrary
+		move.l	d0,a6		;a6=@dos.library
+	;¡¡¡¡ Open Classe file:
+		move.l	5*4(sp),a0	;a0=@classe fileName
+		move.l	a0,d1
+		move.l	#1005,d2
+		jsrLib	Open
+		tst.l	d0
+		beq.w	.e_notFound
+		move.l	d0,a3		;a3=file handle
+	;¡¡¡¡ Get classeFile size:
+		move.l	a3,d1
+		clr.l	d2
+		moveq	#1,d3
+		jsrLib	Seek
+		move.l	a3,d1
+		moveq	#-1,d3
+		jsrLib	Seek
+		move.l	d0,d3	;d3=File size
+		beq.w	.e_empty
+	;¡¡¡¡ Alloc memory:
+		move.l	d3,d0
+		moveq	#optimum,d1
+		move.l	a6,-(sp)
+		bsr.w	Kernel.allocMem
+		move.l	(sp)+,a6
+		bcs.w	.e_error0
+		move.l	d0,a2		;a2=@classe buffer
+	;¡¡¡¡ Load classe:
+		move.l	a3,d1
+		move.l	a2,d2
+		jsrLib	Read
+	;¡¡¡¡ Close file:
+		move.l	a3,d1
+		jsrLib	Close
+	;¡¡¡¡ Close dos.library:
+		move.l	a6,a1
+		move.l	4.w,a6
+		jsrLib	CloseLibrary
+	;¡¡¡¡ Creat classe:
+		move.l	a2,a0
+		bsr.w	Kernel.creatClasse
+		bcs.w	.e_error1
+		move.l	d3,classe_bufferSize(a2)
+	;¡¡¡¡ Enable data cache:
+		bsr.s	.edc
+	;¡¡¡¡ Zee End:
+		move.l	a2,4*4(sp)
+		move.l	d3,(sp)
+		movem.l	(sp)+,d0-d3/a0-a3/a6
+		clc
+		rts
+
+	;åååååååå SUB ROUTINES åååååååå
+.edc		move.l	4.w,a6
+		move.l	#%100000000,d0
+		move.l	#%100000000,d1
+		JsrLib	CacheControl
+		rts
+
+	;åååååååå ERRORS åååååååå
+.e_notFound	move.l	a6,a1
+		move.l	4.w,a6
+		jsrLib	CloseLibrary
+		bsr.s	.edc
+		movem.l	(sp)+,d0-d3/a0-a3/a6
+		moveq	#Kernel__ClasseFile_not_found,d0
+		stc
+		rts
+
+.e_empty	move.l	a3,d1
+		jsrLib	Close
+		move.l	a6,a1
+		move.l	4.w,a6
+		jsrLib	CloseLibrary
+		bsr.s	.edc
+		movem.l	(sp)+,d0-d3/a0-a3/a6
+		moveq	#Kernel__ClasseFile_empty,d0
+		stc
+		rts
+
+.e_error0	move.l	d0,(sp)
+		move.l	a3,d1
+		jsrLib	Close
+		move.l	a6,a1
+		move.l	4.w,a6
+		jsrLib	CloseLibrary
+		bsr.s	.edc
+		movem.l	(sp)+,d0-d3/a0-a3/a6
+		stc
+		rts
+
+.e_error1	move.l	d0,(sp)
+		move.l	a2,d0
+		move.l	d3,d1
+		bsr.w	Kernel.freeMem
+		bsr.s	.edc
+		movem.l	(sp)+,d0-d3/a0-a3/a6
+		stc
+		rts
+
+	;åååååååå DATAS ååååååååå
+.dosName	dc.b	"dos.library",0
+		even

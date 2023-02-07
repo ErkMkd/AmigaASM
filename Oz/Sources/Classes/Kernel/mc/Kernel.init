@@ -1,0 +1,37 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:		init				23/1/1999
+;	NB.......: This method don't need any @object in a5...
+;	IN.......: -
+;	OUT......: a5=@Kernel
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.init	movem.l	d0/d1/a0/a1,-(sp)
+		lea	classeDef.Kernel(pc),a0
+		move.l	a0,d0
+		move.l	a0,object_classe(a0)	;Pas très utile, mais bon...
+	;¡¡¡¡ Init name offset:
+		add.l	d0,nd_name(a0)
+	;¡¡¡¡ Init methods table:
+		add.l	d0,object_methodsTab(a0)
+		move.l	object_methodsTab(a0),a1
+		move.w	object_nbrMethods(a0),d1
+		subq.w	#1,d1
+.methodsTab	add.l	d0,(a1)+
+		dbra	d1,.methodsTab
+	;¡¡¡¡ Init errors table:
+		add.l	d0,classe_errorsTab(a0)
+		move.l	classe_errorsTab(a0),a1
+		move.w	classe_nbrErrors(a0),d1
+		subq.w	#1,d1
+.errorsTab	add.l	d0,(a1)+
+		dbra	d1,.errorsTab
+	;¡¡¡¡ Init objects listHeader:
+		lea	classe_objectsList(a0),a1
+		add.l	d0,lh_first(a1)
+		add.l	d0,lh_last(a1)
+	;¡¡¡¡ Init routines offsets:
+		add.l	d0,classe_remove(a0)
+	;¡¡¡¡ Zee End:
+		move.l	a0,a5
+		movem.l	(sp)+,d0/d1/a0/a1
+		rts

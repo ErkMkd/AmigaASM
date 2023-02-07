@@ -1,0 +1,80 @@
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©									©
+;© 		Classe....: \\\			©
+;©									©
+;©		Version...: 1.0 Beta					©
+;©									©
+;©		Code......: Erk						©
+;©									©
+;©		Last rev..: 1999					©
+;©									©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+;	If variable "Material" is true:
+;	 	Physical classe structures & constantes are initialised.
+
+;	If variable "Material" is false:
+;		Only classe constantes are defined.
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©				HISTORY					©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+;	V1.0: - 1999 - First steps...
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			CLASSE definition				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+	ClasseDef	\\\,noInit,noRem,obj,const,destr,-1,0
+	endcl		\\\
+
+;ЎЎЎЎЎЎЎЎ Errors table ЎЎЎЎЎЎЎЎ
+	ErrorsTab	\\\
+	ERROR	\\\,No_error,noError
+	ende		\\\
+
+;ЎЎЎЎЎЎЎЎ Classe methods table ЎЎЎЎЎЎЎЎ
+	MethodsTab_classe	\\\
+	METHOD	\\\,	;void()
+	endMt_classe		\\\
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			OBJECT definition				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+	ObjectDef	\\\
+	endo		\\\
+
+;ЎЎЎЎЎЎЎЎ Object methods table ЎЎЎЎЎЎЎЎ
+	MethodsTab_object	\\\
+	endMt_object		\\\
+
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			Structures definitions				©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+
+;	рЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎ¶
+;	ш	structure \\\Def	ш
+;	ЯЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎЎж
+	STRUC	\\\Def
+	SSTRUC	\\\Def_hunk,objectDef
+	ENDS	\\\Def
+
+	\\\Def_hunkString=""
+
+;µееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееее®
+;©			Materials datas					©
+;¤еееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееееею
+	ifne	material
+;ЎЎЎЎЎЎЎЎ Misc:
+
+;ЎЎЎЎЎЎЎЎ Errors strings:
+\\\.noError	dc.b	"\\\ ok",0
+		even
+;ЎЎЎЎЎЎЎЎ Classe methods:
+	include	\\\/mc/
+
+;ЎЎЎЎЎЎЎЎ Object methods:
+	include	\\\/mo/
+	endc

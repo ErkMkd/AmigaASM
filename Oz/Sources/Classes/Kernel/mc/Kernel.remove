@@ -1,0 +1,37 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:		remove				23/1/1999
+;	IN.......: -
+;	OUT......: -
+;	ERRORS...: -Can't remove all objects.
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.remove
+		movem.l	d0-d2/a0/a1,-(sp)
+		lea	classeDef.Kernel(pc),a5
+		clr.l	d1
+.strtpass	lea	classe_objectsList(a5),a1
+		move.l	d1,d2
+		clr.l	d1
+.remobjs	move.l	lh_first(a1),a0
+		tst.l	(a0)
+		beq.s	.endpass
+		bsr.w	Kernel.removeClasse
+		bcc.s	.remobjs
+		addq.l	#1,d1
+		move.l	a0,a1
+		lea	classeDef.Kernel(pc),a5
+		bra.s	.remobjs
+.endpass	tst.l	d1
+		beq.s	.ok
+		cmp.l	d1,d2
+		bne.s	.strtpass
+		bra.s	.e_remove
+.ok		movem.l	(sp)+,d0-d2/a0/a1
+		clc
+		rts
+
+	;åååååååååååå ERRORS ååååååååååååå
+
+.e_remove	movem.l	(sp)+,d0-d2/a0/a1
+		moveq	#Kernel__cant_remove_all_objects,d0
+		stc
+		rts

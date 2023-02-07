@@ -1,0 +1,2751 @@
+;APS0000ACF1000022D900002A810000283700002FA800005AFD0000717F000090620000B7C700008819
+*************************************************************************
+*									*
+*	Interphace Intuition+Custom	e®k/INTENSE 5/3/1997		*
+*									*
+*		Ecran intuition:2/8/97 (thanks to Dream !)		*
+*************************************************************************
+
+******************** Taille des instructions *********************
+*	movem.l		xx,yy		=4
+*	move.l		Reg,Reg		=2
+*	moveq		#x,dX		=2
+*
+*	neg.?		dX		=2
+*	tst.?		Reg		=2
+*
+*	subq.w		#x,dX		=2
+*	sub.?		Reg,Reg		=2
+*	sub.b.w		#x,Reg		=4
+*	sub.l		#x,Reg		=6
+*
+*	bmi.s		of7		=2
+*	bmi.w		of7		=4
+*	dbxx		dX,of7		=4
+*
+*	mul.w/div.w	#x,dX		=4
+*	mul.w/div.w	Reg,dX		=2
+
+******************************************************************
+	incdir	cd0:code/routines/asm/interface/
+
+	*-------- INCLUDES ----------*
+
+	include	Dos_error_codes.i
+
+*--- System structures offsets -------*
+	*--Texte -------*
+	Struct_txt_Xpos=4
+	Struct_txt_Ypos=6
+	Struct_txt_TxtPtr=12
+
+	*-----FileInfoBlock--------*
+	File_DirentryType=4
+	File_FileName=8
+	File_Protection=116
+	File_Entrytype=120
+	File_FileSize=124
+	File_NumBlocks=128
+	File_Days=132
+	File_Minutes=136
+	File_Ticks=140
+	File_Comments=144
+
+	*------ Liste_header------*
+	lh_Head=0
+	lh_Tail=4
+	lh_TailPred=8
+	lh_Type=12
+	*------ Node -------------*
+	ln_Succ=0
+	ln_Pred=4
+	ln_Type=8
+	ln_Pri=9
+	ln_Name=10
+
+	*-- Own structs offsets -----*
+		;Struct_Case(C)/Window(W)/Potar(P)
+		Def=0		;CWP
+		Xpos=2		;CWP
+		Ypos=4		;CWP
+		Xlenght=6	;CWP
+		Ylenght=8	;CWP
+		Vector=10	;CWP
+		Hotkey=14	;CW-
+		Oftext=16	;C--
+		Vmin=16		;--P
+		Vmax=20		;--P
+		CursePos=24	;--P
+		LastScrPos=28	;--P
+		DataCase=30	;--P
+		nLeft=34	;--P
+		nRight=36	;--P
+
+		;Struct_Requester
+		Req_WinXpos=0
+		Req_WinYpos=2
+		Req_WinXsize=4
+		Req_WinYsize=6
+		Req_WinName=8
+		Req_UserMessy=12
+		Req_CaseListe=16
+
+
+*---- Offsets des fonctions des libraries ------*
+	*-- routines EXEC --*
+	AllocMem=-198
+	FreeMem=-210
+	Insert=-234
+	AddHead=-240
+	AddTail=-246
+	Remove=-252
+	RemHead=-258
+	RemTail=-264
+	EnQueue=-270
+	FindName=-276
+
+	*-- routines INTUITION --*
+	CloseScreen=-66
+	CloseWindow=-72
+	OpenScreen=-198
+	OpenWindow=-204
+
+	*-- routines DOS --*
+	DeleteFile=-72
+	Lock=-84
+	UnLock=-90
+	Examine=-102
+	ExNext=-108
+	CurrentDir=-126
+	IoErr=-132
+
+
+	*-- routine GRAPHICS --*
+	OwnBlitter=-456
+	DisownBlitter=-462
+	GetColorMap=-570
+	FreeColorMap=-576
+	SetRGB4cm=-630
+
+*----------- Constantes pour gestion clavier ----------*
+
+	Font_Height=8
+
+	*--------Codes ASCII spéciaux:
+	F1=1
+	F2=2
+	F3=3
+	F4=4
+	F5=5
+	F6=6
+	F7=7
+	F8=8
+	F9=9
+	F10=10
+	Fl_left=11
+	Fl_right=12
+	Fl_bottom=13
+	Fl_top=14
+	Del=15
+	Esc=16
+	AlphaENTER=17
+	NumENTER=18
+	Tab=19
+	BackSpace=20
+	Help=21
+
+	*--- Flags clavier ---*
+	Flag_AMIGAright=0
+	Flag_AMIGAleft=1
+	Flag_ALTright=2
+	Flag_ALTleft=3
+	Flag_CTRL=4
+	Flag_CAPSLOCK=5
+	Flag_SHIFTright=6
+	Flag_SHIFTleft=7
+
+*--------- Macro commandes ----------------*
+
+Delay		MACRO
+		move.l	dosbase(pc),a6
+		move.l	\1,d1
+		jsr	-$c6(a6)
+		ENDM
+Forbid		MACRO
+	Move.l	4.w,a6
+	Jsr	-132(a6)
+		ENDM
+
+Permit		MACRO
+	Move.l	4.w,a6
+	Jsr	-138(a6)
+		ENDM
+
+Openlib		MACRO		**> 1\=libname , 2\=version , 3\=base.
+	Move.l	4.w,a6
+	Move.l	#\1,a1
+	move	#\2,d0
+	Jsr	-552(a6)
+	Move.l	d0,\3
+		ENDM
+
+CloseLib	MACRO		**> 1\=adresse de base de la library.
+	Move.l	4,a6
+	Move.l	\1,a1
+	Jsr	-414(a6)
+		ENDM
+
+
+	*--------------- Fonctions graphiques --------------------
+
+pset		MACRO		; pset	(\1,\2)
+	move.l	\1,d0		(x+2,y+11 par rapport aux coords texte)
+	move.l	\2,d1
+	move.l	gfxbase,a6
+	move.l	winh,a0
+	move.l	50(a0),a1	;rastport
+	jsr	-$144(a6)
+		ENDM
+
+line		MACRO		; line (\1,\2)-(\3,\4)
+	movem.l	d0-a6,-(sp)
+	move.l	\1,d0
+	move.l	\2,d1
+	move.l	\3,d6
+	move.l	\4,d7
+	move.l	gfxbase,a6
+	move.l	winh,a0
+	move.l	50(a0),a1	;rastport
+	jsr	-$f0(a6)
+	move.l	d6,d0
+	move.l	d7,d1
+	move.l	winh,a0
+	move.l	50(a0),a1	;rastport
+	jsr	-$f6(a6)
+	movem.l	(sp)+,d0-a6
+		ENDM
+
+Cls	MACRO
+	move.l	Intuibase,a6
+	move.l	winh,a0
+	jsr	CloseWindow(a6)
+	lea	windoche,a0
+	jsr	OpenWindow(a6)
+	move.l	d0,winh
+	ENDM
+
+print		MACRO	;\1=@ texte à afficher
+			;\2=Xpos
+			;\3=Ypos
+	movem.l	d0-a6,-(sp)
+	move.l	intuibase,a6
+	move.l	winh,a0
+	move.l	50(a0),a0			;@ du port
+	lea	text_struct,a1
+	move.l	\1,Struct_txt_Txtptr(a1)	;@ buffer
+	move.w	\2,d0		;X
+	move.w	\3,d1		;Y
+	jsr	-$d8(a6)
+	movem.l	(sp)+,d0-a6
+		ENDM
+
+MousePos	MACRO		;\1=Stock_X \2=Stock_Y
+	movem.l	d1/d3/a0,-(sp)
+	move.l	Sprite0,a0
+	clr.w	d2
+	move.w	(a0),d0
+	move.b	3(a0),d1
+	move.b	d0,d2
+	lsl.w	d2
+	move.b	d1,d3
+	and.b	#1,d3
+	or.b	d3,d2	;d2=Xlores
+	lsr.w	#8,d0
+	move.b	d1,d3
+	and.w	#4,d3
+	lsl.w	#6,d3
+	or.w	d3,d0	;d0=Y
+	lsl.w	d2
+	and.w	#$10,d1
+	lsr.b	#4,d1
+	or.b	d1,d2	;d2=Xhires
+	sub.w	#$100,d2
+	sub.w	#$2c,d0
+	move.l	Winh,a0
+	sub.w	WinH_Xpos(a0),d2
+	sub.w	WinH_Ypos(a0),d0
+	movem.l	(sp)+,d1/d3/a0
+	movem.w	d2/d0,-(sp)
+	move.w	(sp)+,\2
+	move.w	(sp)+,\1
+		ENDM	;d2=X	d0=Y
+
+PrintCase	MACRO		;PrintCase \1,\2,\3,\4,\5
+	movem.l	d0-a6,-(sp)
+	txtcolor	#\4,#\5
+	move.w	Xpos(\1),d2		;\1=@ struct Case (reg. aX)
+	move.w	Ypos(\1),d3		;\2=couleur du haut
+	move.w	Xlenght(\1),d4		;\3=couleur du bas
+	GfxColor	#\2		;\4=couleur fond
+	add.w	d2,d4			;\5=couleur texte
+	move.w	d3,d5
+	add.w	#9,d5
+	line	d2,d3,d4,d3
+	line	d4,d3,d4,d5
+	GfxColor	#\3
+	line	d2,d5,d4,d5
+	line	d2,d3,d2,d5
+	lea	Oftext(\1),a5
+	subq.w	#2,d2
+	sub.w	#11,d3
+	print	a5,d2,d3
+	movem.l	(sp)+,d0-a6
+		ENDM
+
+GfxColor	MACRO	;Gfxcolor  \1 (pixels)
+	movem.l	d0/d1/a0/a1/a6,-(sp)
+	move.l	winh,a1
+	move.l	50(a1),a1	;@ du port
+	move.l	Gfxbase,a6
+	move.w	\1,d0
+	jsr	-$156(a6)
+	movem.l	(sp)+,d0/d1/a0/a1/a6
+		ENDM
+
+TxtColor	MACRO	;Txtcolor \1,\2 (fond,lettres)
+	move.l	a0,-(sp)
+	lea	Text_struct,a0
+	move.b	\1,(a0)
+	move.b	\2,1(a0)
+	move.l	(sp)+,a0
+		ENDM
+
+
+Swindow	MACRO			;Xpos,Ypos,Xlenght,Ylenght
+	movem.l	d0-a6,-(sp)
+	txtcolor	#\2,#\2
+	move.w	Xpos(\1),d2		;\1=@ struct Case (reg. aX)
+	move.w	Ypos(\1),d3		;\2=couleur fond
+	move.w	Xlenght(\1),d4		;\3=couleur haute
+	move.w	Ylenght(\1),d5		;\4=couleur basse
+	move.w	d4,d6
+	move.w	d5,d7
+	GfxColor	#\3
+	add.w	d2,d4
+	add.w	d3,d5
+	addq.w	#1,d4
+	addq.w	#1,d5
+	line	d2,d3,d4,d3
+	line	d4,d3,d4,d5
+	GfxColor	#\4
+	line	d2,d5,d4,d5
+	line	d2,d3,d2,d5
+	lea	fill,a2
+	lsr.w	#3,d6
+	lsr.w	#3,d7
+	subq.w	#1,d7
+	bmi.s	.1
+	clr.b	(a2,d6.w)
+	subq.w	#2,d2
+	sub.w	#11,d3
+.2	print	a2,d2,d3	;<*** début boucle
+	add.w	#Font_Height,d3
+	dbra	d7,.2		;<*** fin boucle
+.1	move.b	#32,(a2,d6.w)	;<--saut
+	movem.l	(sp)+,d0-a6
+		ENDM
+
+Potar		MACRO		;\1=@ Struct potar (Reg. aX)
+	movem.l	d0-a6,-(sp)
+	txtcolor	#\2,#\2
+	move.w	Xpos(\1),d2		;\1=@ struct potar (reg. aX)
+	move.w	Ypos(\1),d3		;\2=couleur fond
+	move.w	Xlenght(\1),d4		;\3=couleur haute
+	move.w	Ylenght(\1),d5		;\4=couleur basse
+	move.w	d4,d6
+	move.w	d5,d7
+	GfxColor	#\3
+	add.w	d2,d4
+	add.w	d3,d5
+	addq.w	#1,d4
+	line	d2,d3,d4,d3
+	line	d4,d3,d4,d5
+	addq.w	#8,d3
+	subq.w	#7,d5
+	line	d2,d3,d4,d3
+	line	d2,d5,d4,d5
+	subq.w	#8,d3
+	addq.w	#7,d5
+	GfxColor	#\4
+	line	d2,d5,d4,d5
+	line	d2,d3,d2,d5
+	addq.w	#7,d3
+	subq.w	#8,d5
+	line	d2,d3,d4,d3
+	line	d2,d5,d4,d5
+	subq.w	#7,d3
+	lea	fill,\1
+	lsr.w	#3,d6
+	lsr.w	#3,d7
+	subq.w	#3,d7
+	bmi.s	.1
+	clr.b	(\1,d6.w)
+	subq.w	#2,d2
+	subq.w	#3,d3
+.2	print	\1,d2,d3	;<*** début boucle
+	addq.w	#8,d3
+	dbra	d7,.2		;<*** fin boucle
+.1	move.b	#32,(\1,d6.w)	;<--saut
+	movem.l	(sp)+,d0-a6
+	CalcYscr	\1
+		ENDM
+
+CalcYscr	MACRO		;\1=@ Struct potar (Reg. aX)
+		movem.l	d0-a6,-(sp)
+		move.l	Vmin(\1),d1
+		move.l	Vmax(\1),d0
+		sub.l	d1,d0
+		move.l	CursePos(\1),d1
+		move.w	Ylenght(\1),d2
+		sub.w	#26,d2
+		ext.l	d2
+		clr.l	d3
+		muls.l	d2,d3:d1
+		divs.l	d0,d3:d1
+		sub.l	d1,d2
+		move.w	Ypos(\1),d1
+		addq.w	#8,d1
+		add.w	d1,d2		;d2=Yscreenpos
+		move.w	Xlenght(\1),d0
+		move.w	Xpos(\1),d1
+		move.w	LastScrPos(\1),d3
+		subq.w	#2,d1
+		sub.w	#11,d2
+		move.w	d2,LastScrPos(\1)
+		lsr.w	#3,d0
+		lea	fill,\1
+		clr.b	(\1,d0.w)
+		txtcolor	#3,#3
+		Print	\1,d1,d3
+		addq.w	#1,d3
+		Print	\1,d1,d3
+		txtcolor	#2,#2
+		Print	\1,d1,d2
+		txtcolor	#1,#1
+		addq.w	#1,d2
+		Print	\1,d1,d2
+		move.b	#32,(\1,d0.w)
+		movem.l	(sp)+,d0-a6
+		ENDM
+
+CalcCurspos	MACRO			;\1=@ structure potar (Reg. aX)
+		movem.l	d0-a6,-(sp)	;\2=Yscreen
+		sub.w	#12,\2
+		move.w	Ypos(\1),d4
+		move.w	Ylenght(\1),d3
+		sub.w	#26,d3
+		add.w	d3,d4
+		sub.w	\2,d4		;d4=Ypos+Ylenght-Yscreen
+		move.l	Vmax(\1),d1
+		sub.l	Vmin(\1),d1	;d1=Vmax-Vmin
+		clr.l	d2
+		ext.l	d4
+		ext.l	d3
+		muls.l	d4,d2:d1
+		divs.l	d3,d2:d1	;d1=Curspos
+		cmp.l	Vmin(\1),d1
+		bgt.s	.1			===>>1
+		move.l	Vmin(\1),CursePos(\1)
+		bra.s	.2			===>>2
+.1		cmp.l	Vmax(\1),d1		<<===1
+		blt.s	.3			===>>3
+		move.l	Vmax(\1),CursePos(\1)
+		bra.s	.2			===>>2
+.3		move.l	d1,CursePos(\1)		<<===3
+.2		movem.l	(sp)+,d0-a6	<<===2
+		CalcYscr	\1
+		ENDM
+
+AffHex	MACRO	AffHex \1,\2,\3,\4
+	movem.l	d0-d3/d6/d7/a5,-(sp)
+	move.l	\1,d0			\1=Valeur hexa
+	move.w	\3,d6			\2=@ Stockage de la chaîne ASCII
+	move.w	\4,d7			\3=Leftlenght (avant la virgule)
+	lea	(\2,d6.w),\2		\4=Right lenght (after the virgule)
+	lea	1(\2,d7.w),\2
+	lea	Alphanumerique(pc),a5
+	moveq	#1,d2
+.0	subq.w	#1,d7
+	bmi.s	.2
+.1	move.l	d0,d1
+	and.l	#$f,d1
+	move.b	(a5,d1.w),-(\2)
+	lsr.l	#4,d0
+	dbra	d7,.1
+	subq.l	#1,\2
+.2	exg.l	d6,d7
+	dbra	d2,.0
+	movem.l	(sp)+,d0-d3/d6/d7/a5
+	ENDM
+
+
+*************************************************************************
+*				DEBUT					*
+*************************************************************************
+			section	intuition,code
+Fais_voir_ta_sale_gueule
+	*---------- ouverture libs -----------------
+	Openlib	Tion_IntuiTion,0,IntuiBase
+	tst.l	d0
+	beq.w	error0
+	Openlib	Gfx_name,0,GfxBase
+	tst.l	d0
+	beq.w	error1
+	Openlib	Mathname,0,Mathbase
+	tst.l	d0
+	beq.w	error2
+	Openlib	Mathffpname,0,Mathffpbase
+	tst.l	d0
+	beq.w	error3
+	Openlib	Dosname,0,Dosbase
+	tst.l	d0
+	beq.w	error4
+
+	*--------- ouverture écran --------------------------
+	move.l	intuibase,a6
+	lea	Skrin,a0
+	jsr	OpenScreen(a6)
+	tst.l	d0
+	beq.w	ErrorSkrin
+	move.l	d0,SkrinH
+
+	*--------- ouverture fenêtre intuition --------------
+	move.l	intuibase,a6
+	lea	windoche,a0
+	move.l	SkrinH,Win_Screen(a0)
+	jsr	OpenWindow(a6)
+	tst.l	d0
+	beq.w	ErrorWin
+	move.l	d0,WinH
+
+	*------- sprite souris -----------
+	bsr.w	Schtroumph
+	cmp.l	#"MERD",d0
+	beq.w	ErrorSpriteInit
+
+	*------ Init des listes --------
+	clr.l	d0
+	bsr.w	Initliste
+	cmp.l	#Insufficient_free_store,d0
+	beq.w	ErrorFileInfoBlockListe
+	move.l	d0,FileInfoBlock_Liste
+
+	*----- Init de la fenêtre d'affichage des fichiers...
+	lea	FilesListeNames,a0
+	bsr.w	Creat_Affstruct
+	cmp.l	#Insufficient_free_store,d0
+	beq.w	ErrorAffStruct
+	move.l	d0,Liste_aff
+
+	*------ affichage ----------------
+
+	bsr.w	coucoudesign
+*************************************************************************
+*			PROGRAMME PRINCIPAL				*
+*************************************************************************
+Salut_ralfy
+*-------- attente message ----------------*
+	move.l	4.w,a6
+	move.l	winh,a5
+	move.l	86(a5),a0	;port message
+	jsr	-$180(a6)
+	move.l	86(a5),a0
+	jsr	-$174(a6)	;get message
+	move.l	d0,a1
+	move.l	20(a1),d1	;message dans d1
+
+*-------- Gestion message-euh -----------*
+	cmp.l	#8,d1		;test si lmb activé 
+	beq.w	Concombre
+	cmp.l	#$400,d1	;test si clavier enfoncé
+	beq.w	Paf_on_keyboard
+	bra.s	Salut_ralfy
+
+*****************************************************************
+*			Gestion souris				*
+*****************************************************************
+
+	*---------- recherche du sprite ---------------
+Schtroumph
+	move.l	gfxbase,a0
+	move.l	38(a0),a0	;a0 -->copper liste
+.ou_es_tu
+	move.w	(a0),d0
+	cmp.w	#$120,d0
+	beq.s	.choppe
+	cmp.w	#$ffff,d0
+	beq.s	.nochoppe
+	add.l	#4,a0
+	bra.s	.ou_es_tu
+.choppe	move.w	2(a0),d0
+	swap	d0
+	move.w	6(a0),d0
+	lea	Sprite0,a0
+	move.l	d0,(a0)
+	moveq	#0,d0
+	rts
+.nochoppe
+	move.l	#"MERD",d0
+	rts
+
+	*----------- Convertion des coords du sprite ---------
+Concombre
+	btst	#6,$bfe001
+	bne.w	Salut_ralfy
+	MousePos	d2,d0
+
+ *--------------- gestion de la position du poinpoin --------*
+	move.l	Ecran,a2
+.bobo	move.l	(a2)+,a3
+	cmp.l	#0,a3
+	Beq.w	Salut_Ralfy
+	cmp.b	#3,Def(a3)	;test si c'est un objet TITLE
+	beq.s	.bobo
+	move.w	Xpos(a3),d1
+	move.w	Ypos(a3),d3
+	cmp.w	d1,d2
+	ble.s	.bobo
+	cmp.w	d3,d0
+	ble.s	.bobo
+	add.w	Xlenght(a3),d1
+	add.w	Ylenght(a3),d3
+	cmp.w	d1,d2
+	bge.s	.bobo
+	cmp.w	d3,d0
+	bge.s	.bobo
+.case	cmp.b	#0,Def(a3)		;test objet case
+	bne.w	.win
+	PrintCase	a3,1,2,3,1
+	move.l	Vector(a3),a3
+	jmp	(a3)
+.win	cmp.b	#1,Def(a3)		;test objet win
+	bne.w	.potar
+	move.l	Vector(a3),a3
+	jmp	(a3)
+.potar	cmp.b	#2,Def(a3)		;test objet potar
+	bne.w	Salut_Ralfy
+	move.l	Vector(a3),a4
+	jmp	(a4)
+
+*****************************************************************
+*			Centre de Commandes			*
+*****************************************************************
+
+
+	*------------Ecran principal -------------*
+Kiquitte
+	bra.w	Va_voir_chez_babarre	;Quit
+
+Sleep_mode
+	btst	#6,$bfe001
+	beq.s	*-8
+	move.l	Intuibase,a6	;fermeture fenêtre
+	move.l	Winh,a0
+	jsr	CloseWindow(a6)
+	move.l	SkrinH,a0
+	jsr	CloseScreen(a6)
+	lea	windoche,a0
+	move.w	#240,Win_Xsize(a0)
+	move.w	#11,Win_Ysize(a0)
+	move.l	#$200,Win_IDCMP_Flags(a0)
+	move.l	#ACTIVATE!MOVEABLE!BACKFOREWARD!CLOSEGADGET,Win_Flags(a0)
+	move.l	intuibase,a6	;réouverture fentre
+	jsr	OpenWindow(a6)
+	move.l	d0,winh
+.wait	move.l	4.w,a6
+	move.l	winh,a5
+	move.l	86(a5),a0	;port message
+	jsr	-$180(a6)
+	move.l	86(a5),a0
+	jsr	-$174(a6)	;get message
+	move.l	d0,a1
+	move.l	20(a1),d1	;message dans d1
+	cmp.l	#$200,d1	;cellule fermeture
+	bne.w	.wait
+	move.l	Intuibase,a6	;fermeture fenêtre
+	move.l	Winh,a0
+	jsr	CloseWindow(a6)
+	lea	Skrin,a0
+	jsr	OpenScreen(a6)
+	move.l	d0,SkrinH
+	lea	windoche,a0
+	move.w	#640,Win_Xsize(a0)
+	move.w	#256,Win_Ysize(a0)
+	move.l	#$408,Win_IDCMP_Flags(a0)
+	move.l	#ACTIVATE!BACKDROP!BORDERLESS,Win_Flags(a0)
+	move.l	intuibase,a6	;réouverture fenêtre
+	jsr	OpenWindow(a6)
+	move.l	d0,winh
+	bsr.w	Coucoudesign
+	bra.w	Salut_Ralfy
+Disk_Op
+	btst	#6,$bfe001
+	beq.s	*-8
+	Cls
+	move.l	#Ecran_2,Ecran
+	bsr.w	Coucoudesign
+	move.l	Liste_aff,a0
+	move.l	FileInfoBlock_Liste,a1
+	bsr.w	Show_AffStruct
+	bra.w	Salut_Ralfy
+
+	*-------- Ecran gestionnaire fichier ----------------*
+Ekssite	
+	btst	#6,$bfe001
+	beq.s	*-8
+	Cls
+	move.l	#Ecran_1,Ecran
+	bsr.w	Coucoudesign
+	bra.w	Salut_Ralfy
+
+		*--------Nouveau répertoire ----------*
+Path_Way
+	btst	#6,$bfe001		*---Saisie au Clavier ---*
+	beq.s	*-8
+	lea	Path,a0
+	lea	PathWay,a1
+	lea	Path_buff,a2
+	move.w	#PathWay_BuffSize-1,d0
+	moveq	#34,d1
+	bsr.w	Saisie_keyBoard
+	cmp.l	#"ESCP",d0
+	beq.w	pathend
+NewRep	move.l	FileInfoBlock_Liste,a0	*---Inits ---*
+	bsr.w	Clear_FileInfoBlocks
+	bsr.w	ClearListe
+	clr.l	NbrFiles
+	tst.l	Selected_file
+	beq.w	.nl
+	clr.l	Selected_file
+	clr.l	Selected_filePos
+	moveq	#FileName_buffSize-1,d0
+	lea	FileName,a0
+.delfn	clr.b	(a0)+
+	dbra	d0,.delfn
+	moveq	#29,d0
+	lea	FileSelected+oftext,a0
+.delfs	move.b	#" ",(a0)+
+	dbra	d0,.delfs
+	lea	FileSelected,a3
+	PrintCase	a3,2,1,3,1
+.nl	move.l	FileInfoBLock_Liste,a0	*---Création de la nouvelle liste
+	move.l	#Path,d0
+	bsr.w	Creat_ListeFiles
+
+	cmp.l	#Object_not_found,d0	*---Tests erreurs---*
+	bne.s	.s0
+	lea	unknown_Path,a0
+	bsr.w	Put_error_Messy
+	bra.w	pathend
+.s0	cmp.l	#Object_not_of_required_type,d0
+	bne.s	.s1
+	lea	Not_a_dir,a0
+	bsr.w	Put_error_Messy
+	bra.w	pathend
+.s1	cmp.l	#Device_not_mounted,d0
+	bne.s	.s2
+	lea	Insert_Disk,a0
+	bsr.w	Put_error_Messy
+	bra.w	pathend
+.s2	cmp.l	#Insufficient_free_store,d0
+	bne.s	.s3
+	lea	no_memory_left,a0
+	bsr.w	Put_error_Messy
+	bra.w	pathend
+.s3	cmp.l	#1000,d0		;erreur inconnue...
+	bgt.s	.s
+	lea	unknown_Path,a0
+	bsr.w	Put_error_Messy
+	bra.w	pathend
+
+.s	move.l	d0,Lock_Ptr
+Pathend					*-----Affichages -------*
+	lea	FilesListeNames,a3
+	Swindow		a3,1,3,2
+	move.l	Liste_aff,a0
+	clr.w	WinAff_CurseXpos(a0)
+	clr.w	WinAff_CurseYpos(a0)
+	move.l	FileInfoBlock_Liste,a1
+	move.l	a1,a2
+	clr.l	d0
+.cptr	move.l	(a2),a2
+	tst.l	(a2)
+	beq.s	.cok
+	addq.l	#1,d0		;d0=Nombre de fichiers dans le répertoir
+	bra.s	.cptr
+.cok	move.l	d0,NbrFiles		*---Init du potar ---*
+	lea	ListePos,a3
+	move.l	d0,d1
+	sub.w	WinAff_Ysize(a0),d1
+	bgt.s	.cok2
+	moveq	#1,d1
+.cok2	move.l	d1,Vmax(a3)
+	move.l	d1,CursePos(a3)
+Corec	Potar		a3,3,2,1
+	move.l	Liste_aff,a0		*---Affichage liste files ---*
+	move.l	FileInfoBlock_Liste,a1
+	bsr.w	Show_AffStruct
+	lea	PathWay,a3
+	PrintCase	a3,2,1,3,1
+	bra.w	Salut_Ralfy
+
+Put_error_messy	;a0=@Message		*---Message d'erreur ds PathWay_win---*
+	lea	PathWay+OfText,a1
+	moveq	#33,d0
+.copy	move.b	(a0)+,(a1)+
+	dbra	d0,.copy
+	rts
+
+		*--------Scroll la liste vers la gauche ----------*
+Liste_Left
+	move.l	Liste_aff,a0
+	move.w	#IdASCII_st_Size,d0
+	sub.w	WinAff_Xsize(a0),d0
+	ble.s	.end			;Très improbable...mais au cas Z'où..
+	cmp.w	WinAff_CurseXpos(a0),d0
+	ble.s	.end
+	addq.w	#1,WinAff_CurseXpos(a0)
+	move.l	FileInfoBLock_Liste,a1
+	bsr.w	Show_AffStruct
+	btst	#6,$bfe001
+	beq.s	Liste_Left
+.end	lea	ListeLeft,a3
+	PrintCase	a3,2,1,3,1
+	bra.w	Salut_Ralfy
+
+		*--------Scroll la liste vers la Droite ----------*
+Liste_Right
+	move.l	Liste_aff,a0
+	tst.w	WinAff_CurseXpos(a0)
+	ble.s	.end
+	subq.w	#1,WinAff_CurseXpos(a0)
+	move.l	FileInfoBLock_Liste,a1
+	bsr.w	Show_AffStruct
+	btst	#6,$bfe001
+	beq.s	Liste_Right
+.end	lea	ListeRight,a3
+	PrintCase	a3,2,1,3,1
+	bra.w	Salut_Ralfy
+
+		*---------------Réperoire précédent ---------------*
+Parent_dir
+	lea	Path,a0			*---Cherche fin de chaine
+	tst.b	(a0)
+	beq.w	.end
+	move.w	#PathWay_BuffSize-2,d0
+.srend	tst.b	(a0)+
+	beq.w	.tsup
+	dbra	d0,.srend
+.tsup	cmp.b	#":",-2(a0)	*---Supprime le nom du répertoire courant
+	beq.w	.end
+	subq.l	#1,a0
+.supp	cmp.l	#Path,a0
+	beq.w	.end
+	clr.b	-(a0)
+	cmp.b	#"/",-1(a0)
+	beq.s	.ok0
+	cmp.b	#":",-1(a0)
+	beq.s	.ok0
+	bra.s	.supp
+.ok0	moveq	#33,d0			*---Inits pré-affichage
+	lea	PathWay+Oftext,a0
+	lea	Path,a1
+.copy2	move.b	(a1)+,d1
+	tst.b	d1
+	beq.s	.spc
+	move.b	d1,(a0)+
+	dbra	d0,.copy2
+	bra.s	.ok1
+.spc	move.b	#" ",(a0)+
+	dbra	d0,.spc
+.ok1	btst	#6,$bfe001		*---Affichages finals...finaux..euh...
+	beq.s	*-8
+	lea	PathWay,a3
+	PrintCase	a3,2,1,3,1
+	lea	ParentDir,a3
+	Printcase	a3,2,1,3,1
+	bra.w	NewRep
+.end	btst	#6,$bfe001
+	beq.s	*-8
+	lea	ParentDir,a3
+	Printcase	a3,2,1,3,1
+	bra.w	Salut_Ralfy
+
+		*----Saisie au clavier du nom du fichier sélectionné ----*
+File_Selected
+	lea	FileName,a0
+	lea	FileSelected,a1
+	lea	FileNameBuff,a2
+	move.w	#FileName_BuffSize-1,d0
+	moveq	#30,d1
+	bsr.w	Saisie_keyBoard
+	cmp.l	#"ESCP",d0
+	beq.s	.end
+	tst.l	d2			;test si il y a eut des changements
+	beq.s	.end
+	clr.l	Selected_file
+	clr.l	Selected_filePos
+	move.l	liste_aff,a0
+	move.l	fileinfoblock_liste,a1
+	bsr.w	Show_Affstruct
+
+.end	btst	#6,$bfe001
+	beq.s	*-8
+	lea	FileSelected,a3
+	Printcase	a3,2,1,3,1
+	bra.w	Salut_Ralfy
+
+		*--------- Effacement du fichier sélectionné ---------*
+Delete_Fichier
+	btst	#6,$bfe001
+	beq.s	*-8
+	tst.l	Selected_file
+	beq.w	.end
+	mousePos	d0,d1
+	lea	Confirm_deletion,a0
+	cmp.w	#640-226,d0
+	blt.s	.ty
+	move.w	#640-226,d0
+.ty	cmp.w	#256-40,d1
+	blt.s	.ok
+	move.w	#256-40,d1
+.ok	move.w	d0,Req_WinXpos(a0)
+	move.w	d1,Req_WinYpos(a0)
+	bsr.w	Request_ta_mere
+	lea	Confirm_deletion,a0
+	cmp.l	#"RQST",d0
+	beq.w	.end
+	cmp.l	#"NON!",Req_UserMessy(a0)
+	beq.w	.end
+	cmp.l	#"OUI!",Req_UserMessy(a0)
+	bne.w	.end
+
+	lea	Path,a0		*---Fusion PathWay_Name + File_Name
+	lea	FileName,a1
+	bsr.w	Merge_strings
+	move.l	d0,WayFile
+	move.l	d1,WayFile_size
+
+.delet	move.l	dosbase,a6	*---Effacement ---*
+	move.l	WayFile,d1
+	jsr	DeleteFile(a6)
+	move.l	4.w,a6		*---Restitution mémoire ---*
+	move.l	WayFile,a1
+	move.l	WayFile_Size,d0
+	jsr	FreeMem(a6)
+	lea	DeleteFichier,a3
+	Printcase	a3,2,1,3,1
+	bra.w	NewRep
+.end	lea	DeleteFichier,a3
+	Printcase	a3,2,1,3,1
+	bra.w	Salut_Ralfy	
+
+Oh_no				*---------- Cellules du requester
+	btst	#6,$bfe001
+	beq.s	*-8
+	lea	Confirm_deletion,a0
+	move.l	#"NON!",Req_UserMessy(a0)
+	bra.w	End_request
+Yeah_Man
+	btst	#6,$bfe001
+	beq.s	*-8
+	lea	Confirm_deletion,a0
+	move.l	#"OUI!",Req_UserMessy(a0)
+	bra.w	End_request
+
+		*--------- Chargement du fichier sélectionné ---------*
+Load_File
+	btst	#6,$bfe001
+	beq.s	*-8
+	lea	LoadFile,a3
+	Printcase	a3,2,1,3,1
+	tst.l	Selected_file
+	beq.w	.err
+	bra.w	NewRep
+.err	bra.w	Salut_Ralfy	
+
+		*--------- Sauvegarde du fichier saisi ---------*
+Save_File
+	btst	#6,$bfe001
+	beq.s	*-8
+	lea	SaveFile,a3
+	Printcase	a3,2,1,3,1
+	tst.l	Selected_file
+	beq.w	.err
+	bra.w	NewRep
+.err	bra.w	Salut_Ralfy	
+
+
+*---------------- fenêtres ----------------------------*
+FilesListe_Names
+	;clr.l	selected_file
+	;clr.l	selected_FilePos
+	;move.l	Liste_aff,a0
+	;move.l	FileInfoBlock_Liste,a1
+	;bsr.w	Show_AffStruct
+
+	move.l	Liste_aff,a0
+	move.l	FileInfoBlock_Liste,a1
+	bsr.w	Search_RasterPos
+	cmp.l	#"OVER",d0
+	beq.w	.end
+	move.l	st_FileInfoBlock(a0),a1	*---Test: Fichier/Répertoire?
+	tst.l	FIB_DirEntryType(a1)
+	bmi.w	.file
+
+	lea	Path,a0			*---Traitement Répertoire
+	move.w	#PathWay_BuffSize-2,d0
+.srend	tst.b	(a0)+
+	beq.w	.Add
+	dbra	d0,.srend
+	lea	Buffer_OverFlow,a0
+	bsr.w	Put_error_Messy
+	lea	PathWay,a3
+	PrintCase	a3,2,1,3,1
+	bra.w	.end
+.Add	subq.l	#1,a0
+	cmp.b	#"/",-1(a0)
+	beq.w	.ok2
+	cmp.b	#":",-1(a0)
+	beq.w	.ok2
+	move.b	#"/",(a0)+
+.ok2	Lea	FIB_FileName(a1),a1
+.copy	move.b	(a1)+,(a0)+
+	tst.b	(a1)
+	bne.s	.copy
+	clr.b	(a0)
+	moveq	#33,d0
+	lea	PathWay+Oftext,a0
+	lea	Path,a1
+.copy2	move.b	(a1)+,d1
+	tst.b	d1
+	beq.s	.cesp0
+	move.b	d1,(a0)+
+	dbra	d0,.copy2
+	bra.s	.espok
+.cesp0	move.b	#" ",(a0)+
+	dbra	d0,.cesp0
+.espok	btst	#6,$bfe001
+	beq.s	*-8
+	lea	PathWay,a3
+	PrintCase	a3,2,1,3,1
+	bra.w	NewRep
+
+.file	move.l	a0,Selected_file	*---Traitement Fichier
+	move.l	d0,Selected_filePos
+	move.l	st_FileInfoBlock(a0),a0
+	lea	FIB_FileName(a0),a0
+	lea	FileName,a1
+	moveq	#FileName_buffsize-1,d0
+.copyN	move.b	(a0)+,(a1)+
+	dbra	d0,.copyN
+	lea	FileName,a0
+	lea	FileSelected+oftext,a1
+	moveq	#29,d0
+.showN	move.b	(a0)+,d1
+	tst.b	d1
+	beq.w	.cesp1
+	move.b	d1,(a1)+
+	dbra	d0,.showN
+	bra.s	.okshn
+.cesp1	move.b	#" ",(a1)+
+	dbra	d0,.cesp1
+.okshn
+		move.l	Liste_aff,a0
+		move.l	FileInfoBlock_Liste,a1
+		bsr.w	Show_AffStruct
+
+	lea	FileSelected,a3
+	Printcase	a3,2,1,3,1
+.end	btst	#6,$bfe001
+	beq.s	*-8
+	bra.w	Salut_Ralfy
+
+*---------------- potars ------------------------------*
+Liste_pos
+	move.l	Liste_Aff,a0
+	move.l	NbrFiles,d0
+	cmp.w	WinAff_Ysize(a0),d0
+	ble.w	.end
+
+	MousePos	d2,d0	
+	lea	ListePos,a3
+	bsr.w	Gestion_Potar
+
+	lea	ListePos,a3
+	move.l	CursePos(a3),d0
+	neg.l	d0
+	move.l	Liste_Aff,a0
+	move.l	NbrFiles,d1
+	sub.w	WinAff_Ysize(a0),d1
+	ble.w	.end				;Très improbable
+	add.l	d1,d0
+	move.w	d0,WinAff_CurseYpos(a0)
+	move.l	FileInfoBlock_Liste,a1
+	bsr.w	Show_AffStruct
+	btst	#6,$bfe001
+	beq.w	Liste_Pos
+	Lea	ListePos,a3
+	Potar		a3,3,2,1
+.end	bra.w	Salut_Ralfy
+
+*********************************************************
+*		Gestion des potars			*
+*********************************************************
+gestion_potar
+	move.w	Ypos(a3),d3
+	move.w	d3,d4
+	addq.w	#8,d3
+	cmp.w	d0,d3
+	bge.w	Click_potar_up
+	add.w	Ylenght(a3),d4
+	subq.w	#7,d4
+	cmp.w	d0,d4
+	blt.w	Click_potar_down
+.Popo	MousePos	d2,d0
+	CalcCursPos	a3,d0
+	rts
+
+Click_potar_up
+	move.w	Xpos(a3),d0
+	move.w	Ypos(a3),d1
+	move.w	Xlenght(a3),d2
+	add.w	d0,d2
+	addq.w	#1,d2
+	move.w	d1,d3
+	addq.w	#7,d3
+	gfxcolor	#1
+	line	d0,d1,d2,d1
+	line	d2,d1,d2,d3
+	gfxcolor	#2
+	line	d0,d1,d0,d3
+	line	d0,d3,d2,d3
+.popo	move.l	CursePos(a3),d4
+	cmp.l	Vmax(a3),d4
+	Bge.s	.a
+	addq.l	#1,CursePos(a3)
+.a	CalcYscr	a3
+	btst	#6,$bfe001
+	beq.w	.end
+	line	d0,d1,d2,d1
+	line	d2,d1,d2,d3
+	gfxcolor	#1
+	line	d0,d1,d0,d3
+	line	d0,d3,d2,d3
+.end	rts
+
+Click_potar_down
+	move.w	Xpos(a3),d0
+	move.w	Ypos(a3),d1
+	move.w	Xlenght(a3),d2
+	add.w	Ylenght(a3),d1
+	subq.w	#7,d1
+	add.w	d0,d2
+	addq.w	#1,d2
+	move.w	d1,d3
+	addq.w	#7,d3
+	gfxcolor	#1
+	line	d0,d1,d2,d1
+	line	d2,d1,d2,d3
+	gfxcolor	#2
+	line	d0,d1,d0,d3
+	line	d0,d3,d2,d3
+.popo	move.l	CursePos(a3),d4
+	cmp.l	Vmin(a3),d4
+	ble.s	.a
+	subq.l	#1,CursePos(a3)
+.a	CalcYscr	a3
+	btst	#6,$bfe001
+	beq.w	.end
+	line	d0,d1,d2,d1
+	line	d2,d1,d2,d3
+	gfxcolor	#1
+	line	d0,d1,d0,d3
+	line	d0,d3,d2,d3 
+.end	rts
+
+
+*****************************************************************
+*			GESTION CLAVIER				*
+*****************************************************************
+	*----------- Racourcis clavier ------*
+Paf_on_keyboard
+		txtcolor	#3,#1
+		bsr.w	Conv_to_ASCII
+		tst.b	d0
+		beq.w	Salut_Ralfy
+		move.l	Ecran,a4
+.tstcomm	move.l	(a4)+,a0
+		cmp.l	#0,a0
+		beq.w	Salut_ralfy
+		cmp.b	Hotkey+1(a0),d0
+		bne.w	.tstcomm
+		move.l	Vector(a0),a0
+		jmp	(a0)
+
+
+	*----------Saisie clavier---------*
+Saisie_keyboard		;a0=@Stockage a1=@Structure Affichage
+			;a2=@Stockage buffer
+			;d0=Stockage_Size d1=Affichage_Size
+
+	clr.l	-(sp)		;(sp)=cptr nbr caractères ASCII saisis
+	clr.w	Marge_left
+	clr.w	CursePos
+	subq.w	#1,d0		;Car OPTION BASE
+	subq.w	#1,d1		;	=0
+	bsr.w	Copy_to_buff
+	bsr.w	Affiche_Car
+	bsr.w	Affiche_Curseur
+Seizing
+	movem.l	a0/a1/a2/d0/d1,-(sp)
+.wait	move.l	4.w,a6
+	move.l	winh,a5
+	move.l	86(a5),a0	;port message
+	jsr	-$180(a6)
+	move.l	86(a5),a0
+	jsr	-$174(a6)	;get message
+	move.l	d0,a1
+	move.l	20(a1),d1	;message dans d1
+	cmp.l	#$400,d1
+	bne.s	.wait
+	bsr.w	Conv_to_ASCII
+	move.w	d0,d2
+	movem.l	(sp)+,a0/a1/a2/d0/d1
+	tst.b	d2
+	beq.s	Seizing
+	cmp.w	#21,d2
+	bgt.s	addCar
+	lea	Seize_Vectors_table,a3
+	sub.w	#11,d2
+	bmi.s	Seizing
+	move.l	(a3,d2.w*4),a3
+	jmp	(a3)
+addCar	move.w	CursePos,d3
+	cmp.w	d0,d3
+	bgt.s	Seizing
+	lea	(a2,d0.w),a3
+	move.w	d0,d4
+	sub.w	d3,d4
+	subq.w	#1,d4
+	bmi.s	.s
+.decal	move.b	-(a3),1(a3)	;insertion
+	dbra	d4,.decal
+.s	move.b	d2,(a2,d3.w)
+	addq.l	#1,(sp)
+	bsr.s	Move_Curse_to_right
+	bra.s	Seizing
+
+Move_Curse_to_right	;a0=@Stockage a1=@Structure Affichage
+			;d0=StockSize d1=AffSize
+	cmp.w	CursePos,d0
+	blt.s	.affCar
+	addq.w	#1,CursePos
+	move.w	CursePos,d2
+	sub.w	Marge_left,d2
+	cmp.w	d2,d1
+	bgt.s	.affCar
+	move.w	CursePos,Marge_left
+	sub.w	d1,Marge_left
+.affCar	bsr.w	Affiche_Car
+	bsr.w	Affiche_Curseur
+	rts
+
+Move_Curse_to_left	;a0=@Stockage a1=@Structure Affichage
+			;d0=StockSize d1=AffSize
+	tst.w	CursePos
+	ble.s	.affCar
+	subq.w	#1,CursePos
+	move.w	CursePos,d2
+	sub.w	Marge_Left,d2
+	bpl.s	.affCar
+	subq.w	#1,Marge_Left
+.affCar	bsr.w	Affiche_Car
+	bsr.w	Affiche_Curseur
+	rts
+
+Affiche_Car	;a0=@Stockage a1=@Structure Affichage d1=AffSize
+	movem.l	a0/a1/a2/d0/d1,-(sp)
+	move.w	Marge_left,d2
+	lea	(a2,d2.w),a2
+	lea	OfText(a1),a3
+	move.w	d1,d2
+.copy	move.b	(a2)+,d3
+	tst.b	d3
+	beq.s	.spc
+.ok	move.b	d3,(a3)+
+	dbra	d2,.copy
+	bra.s	.end
+.spc	move.b	#" ",(a3)+
+	dbra	d2,.spc
+.end	move.l	a1,a3
+	PrintCase	a3,1,2,3,1
+	movem.l	(sp)+,a0/a1/a2/d0/d1
+	rts
+
+Affiche_curseur
+	movem.l	a0-a2/d0/d1,-(sp)
+	TxtColor	#2,#3
+	movem.l	(sp),a0-a2/d0/d1
+	move.w	CursePos,d4
+	move.b	(a2,d4.w),d5
+	tst.b	d5
+	bne.s	.s
+	move.b	#" ",d5
+.s	move.b	d5,Curseur
+	move.w		Xpos(a1),d2
+	move.w		Ypos(a1),d3
+	subq.w	#2,d2
+	sub.w	#11,d3
+	sub.w	Marge_left,d4
+	lsl.w	#3,d4
+	add.w	d4,d2
+	Print	#Curseur,d2,d3
+	movem.l	(sp)+,a0-a2/d0/d1
+	rts
+
+Copy_to_buff
+	move.w	d0,d2
+	move.l	a0,a3
+	move.l	a2,a4
+.copy	move.b	(a3)+,(a4)+
+	dbra	d2,.copy
+	rts
+
+	*------ Specials functions---*
+Dep_left
+	move.b	Board_Flags,d2
+	and.b	#$c0,d2
+	beq.s	.s
+	clr.w	CursePos
+	clr.w	Marge_left
+	bsr.w	Affiche_Car
+	bsr.w	Affiche_Curseur
+	bra.w	Seizing
+.s	bsr.w	Move_Curse_to_left
+	bra.w	Seizing
+Dep_right
+	move.b	Board_Flags,d2
+	and.b	#$c0,d2
+	beq.s	.s
+	move.l	a2,a3
+	clr.w	CursePos
+.search	addq.w	#1,CursePos
+	tst.b	(a3)+
+	bne.s	.search
+	subq.w	#1,CursePos
+	cmp.w	CursePos,d1
+	bgt.s	.a
+	move.w	CursePos,Marge_left
+	sub.w	d1,Marge_left
+.a	bsr.w	Affiche_Car
+	bsr.w	Affiche_Curseur
+	bra.w	Seizing
+.s	move.w	Cursepos,d2
+	tst.b	(a2,d2.w)
+	beq.s	.fin
+	bsr.w	Move_Curse_to_right
+.fin	bra.w	Seizing
+Dep_Del
+	move.w	CursePos,d2
+	lea	(a2,d2.w),a3
+.del	move.b	1(a3),(a3)+
+	tst.b	(a3)
+	bne.s	.del
+.s	bsr.w	Affiche_Car
+	bsr.w	Affiche_Curseur
+	bra.w	Seizing
+Escape_Seizing
+	bsr.w	Copy_to_buff
+	clr.w	Marge_left
+	bsr.w	Affiche_Car
+	move.l	(sp)+,d1	;d1=Nbr caractères saisis
+	clr.l	d1
+	clr.l	d2		;d2=UnChange
+	move.l	#"ESCP",d0
+	rts
+End_Seizing
+	move.w	d0,d2
+	clr.l	d3		;d1 va servir de temoin Changed/UnChanged
+	move.l	a0,a3
+	move.l	a2,a4
+.copy	move.b	(a4)+,d4
+	cmp.b	(a3),d4
+	beq.s	.s
+	moveq	#-1,d3		;Si C/Uc<0,alors Changed=True
+.s	move.b	d4,(a3)+
+	dbra	d2,.copy
+	clr.w	Marge_left
+	bsr.w	Affiche_Car
+	move.l	d3,d2		;d2=Témoin Changed/UnChanged
+	move.l	(sp)+,d1	;d1=Nbr caractères saisis
+	rts
+Dep_Bspace
+	move.w	CursePos,d2
+	tst.w	d2
+	beq.w	Seizing
+	bsr.w	Move_Curse_to_left
+	bra.w	Dep_Del
+Help_Seize
+	bra.w	Seizing
+
+
+	*---------- Convertion ASCII-------*
+
+Conv_to_ASCII		;renvoie la valeur ASCII dans d0
+	clr.l	d0
+	move.b	$bfec01,d0
+	cmp.w	#64,d0
+	bge.s	Tshift
+	sub.w	#48,d0
+	bmi.s	Fin_ASCII_Conv
+	lea	KeyVectors_table,a2
+	move.l	(a2,d0.w*4),a2
+	jmp	(a2)
+
+Tshift	btst	#0,d0
+	beq.s	NoKey
+	move.b	Board_Flags,d1
+	move.b	d1,d2
+	and.b	#$e0,d1
+	bne.s	Board2
+	and.b	#$c,d2
+	bne.s	Board3
+Board1	lea	Table_Clavier1,a2
+	bra.s	KeyTake
+Board2	lea	Table_Clavier2,a2
+	bra.s	KeyTake
+Board3	lea	Table_Clavier3,a2
+KeyTake	sub.b	#64,d0
+	lsr.b	d0
+	move.b	(a2,d0.w),d0
+Fin_ASCII_Conv	rts
+NoKey	clr.b	d0
+	rts
+
+Amiga_right
+	bset	#0,Board_Flags
+	clr.b	d0
+	rts
+Amiga_left
+	bset	#1,Board_Flags
+	clr.b	d0
+	rts
+Alt_right
+	bset	#2,Board_Flags
+	clr.b	d0
+	rts
+Alt_left
+	bset	#3,Board_Flags
+	clr.b	d0
+	rts
+Ctrl
+	bset	#4,Board_Flags
+	clr.b	d0
+	rts
+CapsLock
+	bset	#5,Board_Flags
+	clr.b	d0
+	rts
+Shift_right
+	bset	#6,Board_Flags
+	clr.b	d0
+	rts
+Shift_left
+	bset	#7,Board_Flags
+	clr.b	d0
+	rts
+
+Amiga_right_r
+	bclr	#0,Board_Flags
+	clr.b	d0
+	rts
+Amiga_left_r
+	bclr	#1,Board_Flags
+	clr.b	d0
+	rts
+Alt_right_r
+	bclr	#2,Board_Flags
+	clr.b	d0
+	rts
+Alt_left_r
+	bchg	#3,Board_Flags
+	clr.b	d0
+	rts
+Ctrl_r
+	bclr	#4,Board_Flags
+	clr.b	d0
+	rts
+CapsLock_r
+	bclr	#5,Board_Flags
+	clr.b	d0
+	rts
+Shift_right_r
+	bclr	#6,Board_Flags
+	clr.b	d0
+	rts
+Shift_left_r
+	bclr	#7,Board_Flags
+	clr.b	d0
+	rts
+
+
+*------------- Erreurs de session clavier---------------*
+Er_Marges
+	move.l	#"MARG",d0
+	rts
+*********************************************************
+*-------------------- Gestion mémoire ------------------*
+*		Erk/INTENSE  Start:23/7/1997		*
+*********************************************************
+;	Struct_ListHeader:
+;	dc.l	lh_Head		@ 1er noeud
+;	dc.l	lh_Tail		Dernier noeud pointe là-dessus
+;	dc.l	lh_TailPred	@ dernier noeud
+;	dc.b	lh_type		type de la liste
+;	dc.b	lh_pad		dummy.
+
+;	Struct_node
+;	dc.l	ln_Succ
+;	dc.l	ln_Pred
+;	dc.b	ln_Type
+;	dc.b	ln_Pri
+;	dc.l	ln_Name
+
+;	Types:
+;		0=File struct
+
+
+	ListHeaderSize=14
+	NodeSize=14
+
+InitListe	;d0=lh_Type
+		;Renvoie @ liste dans d0
+	move.b	d0,-(sp)
+	move.l	4.w,a6
+	move.l	#ListHeaderSize,d0
+	move.l	#$10004,d1
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	move.l	#ListHeaderSize,d0
+	move.l	#$10002,d1
+	jsr	AllocMem(a6)
+	beq.w	Er_Header_alloc
+.ok	move.l	d0,a0
+	clr.l	lh_Tail(a0)
+	move.l	d0,lh_TailPred(a0)
+	addq.l	#4,d0
+	move.l	d0,lh_Head(a0)
+	move.b	(sp)+,lh_Type(a0)
+	move.l	a0,d0
+	rts
+
+CreatNode	;a0=@Liste / d0=ln_Pri / d1=Position(0=Head -1=Tail) / d2=@Name
+		;Renvoie @du noeud dans d0
+	movem.l	a0/d0-d2,-(sp)
+	move.l	4.w,a6
+	clr.w	d7
+	move.b	lh_Type(a0),d7
+	lea	types_table,a1
+	move.l	(a1,d7.w*4),d0
+	move.l	#$10004,d1
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	lea	types_table,a1
+	move.l	(a1,d7.w*4),d0
+	move.l	#$10002,d1
+	jsr	AllocMem(a6)
+	beq.w	Er_Node_Alloc
+.ok	move.l	d0,a1			;a1=@New_Node
+	movem.l	(sp)+,a0/d0-d2		;a0=@Liste_Header
+	move.l	d2,ln_Name(a1)
+	move.b	d0,ln_Pri(a1)
+	move.b	lh_Type(a0),ln_Type(a1)
+	cmp.w	#-1,d1
+	bgt.s	.tsthd
+	blt.w	Er_CreatNode_over
+	move.l	a1,-(sp)
+	jsr	AddTail(a6)
+	bra.s	.end
+.tsthd	subq.w	#1,d1
+	bpl.s	.insert
+	move.l	a1,-(sp)
+	jsr	AddHead(a6)
+	bra.s	.end
+.insert	move.l	a0,a2
+.search	move.l	(a2),a2
+	tst.l	(a2)		;a2=@OldNode
+	beq.w	Er_CreatNode_over
+	dbra	d1,.search
+	move.l	a1,-(sp)
+	jsr	Insert(a6)
+.end	move.l	(sp)+,d0
+	rts
+
+RemoveNode	;a0=@ Liste d0=Position(0=Head -1=Tail)
+		;d0 renvoie le nombre d'octets effacés.
+	move.l	4.w,a6
+	cmp.w	#-1,d0
+	beq.s	.tail
+	blt.w	Er_RemoveNode_over
+	move.l	(a0),a1
+	subq.w	#1,d0
+	bpl.s	.search
+	movem.l	a0/a1,-(sp)
+	jsr	RemHead(a6)
+	bra.s	.Rend
+.search	tst.l	(a1)
+	beq.w	Er_RemoveNode_over
+	move.l	(a1),a1
+	dbra	d0,.search
+	cmp.l	lh_TailPred(a0),a1
+	beq.s	.tail
+	movem.l	a0/a1,-(sp)
+	jsr	Remove(a6)
+	bra.s	.Rend
+.tail	move.l	lh_TailPred(a0),a1
+	movem.l	a0/a1,-(sp)
+	jsr	RemTail(a6)
+.Rend	movem.l	(sp)+,a0/a1
+	lea	types_table,a2
+	move.b	lh_Type(a0),d0
+	ext.w	d0
+	move.l	(a2,d0.w*4),d0
+	jsr	FreeMem(a6)
+	rts
+
+ExchangeNode
+	rts
+FindNameNode
+	rts
+EnqueueNode
+	rts
+TriListe
+	rts
+DupliqueNode
+	rts
+DupliqueListe
+	rts
+
+ClearListe	;a0=@Liste
+		;d0 renvoie le nombre de noeuds effacés
+		;d1 renvoie le nombre d'octets effacés
+	clr.l	d0
+	clr.l	d1
+.ClrNds	move.l	(a0),a1
+	tst.l	(a1)
+	beq.s	.end
+	movem.l	a0/d0,-(sp)
+	moveq	#-1,d0
+	move.l	d1,-(sp)
+	bsr.w	RemoveNode
+	move.l	(sp)+,d1
+	add.l	d0,d1
+	movem.l	(sp)+,a0/d0
+	addq.l	#1,d0		;Incrémente NbrnodeCleared
+	bra.s	.ClrNds
+.end	rts
+
+RemoveListe	;a0=@Liste
+		;d0 renvoie le nombre de noeuds effacés
+		;d1 renvoie le nombre d'octets effacés
+	bsr.w	ClearListe
+	move.l	d0,-(sp)
+	move.l	4.w,a6
+	move.l	a0,a1
+	move.l	#ListHeaderSize,d0
+	move.l	d1,-(sp)
+	jsr	Freemem(a6)
+	move.l	(sp)+,d1
+	add.l	d0,d1
+	move.l	(sp)+,d0
+	rts
+
+*------- Erreurs de gestion mémoire ---------*
+Er_Header_alloc
+	move.b	(sp)+,d0
+	move.l	#Insufficient_free_store,d0
+	rts
+Er_Node_Alloc
+	movem.l	(sp)+,a0/d0-d2
+	move.l	#Insufficient_free_store,d0
+	rts
+Er_CreatNode_Over
+	move.l	#"COVR",d0
+	rts
+Er_RemoveNode_Over
+	move.l	#"ROVR",0
+	rts
+
+********************************************************
+*----------- Gestion interactive des listes -----------*
+********************************************************
+
+	*----Création de la strucure d'affichage d'une liste  -----*
+Creat_AffStruct	;a0=@Window
+		;Génère une structure ShowListe,@ renvoyée dans d0.
+
+	clr.l	d1
+	move.w	Xlenght(a0),d0	*---Calcul les dimensions TEXTE de la fenêtre
+	move.w	Ylenght(a0),d1
+	lsr.w	#3,d0		;d0=SizeX
+	;addq.w	#1,d0		;on rajoute le 0 de fin de chaîne
+	divu.w	#Font_Height,d1	;d1=SizeY
+	move.w	d1,d2
+	mulu.w	d0,d2		;d2=TotalSize
+	add.l	#14,d2
+	movem.l	d0/d1/a0,-(sp)	*---Allocation mémoire
+	move.l	4.w,a6
+	move.l	d2,d0
+	move.l	#$10004,d1
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	move.l	d2,d0
+	move.l	#$10002,d1
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	movem.l	(sp)+,d0/d1/a0
+	move.l	#Insufficient_free_store,d0
+	rts
+.ok	move.l	d0,a2		*------ Init final de la structure ---*
+	movem.l	(sp)+,d0/d1/a0
+	move.w	Xpos(a0),WinAff_Xpos(a2)
+	move.w	Ypos(a0),WinAff_Ypos(a2)
+	move.w	d0,WinAff_Xsize(a2)
+	move.w	d1,WinAff_Ysize(a2)
+	move.l	a2,d0
+	rts
+
+*----------- Affichage d'une structure AffListe ------------*
+Show_AffStruct	;a0=@Struct_Affliste a1=@Files_Liste
+
+	move.w	WinAff_CurseYpos(a0),d0	*----Cherche la première ligne----*
+	move.l	a1,a2
+.search	move.l	(a2),a2
+	tst.l	(a2)
+	beq.w	.Searcherror
+	dbra	d0,.search		;a2=@ premier noeud à afficher...
+
+	move.w	WinAff_Ysize(a0),d0	*---- remplissage  StockASCII----*
+	lea	WinAff_StockASCII(a0),a4
+	subq.w	#1,d0
+.remp	tst.l	(a2)
+	bne.s	.s0
+	clr.b	(a4)
+	bra.s	.s1
+.s0	move.l	st_IdASCII(a2),a3	;a3=@Chaîne à afficher
+	move.w	WinAff_CurseXpos(a0),d1
+	lea	(a3,d1.w),a3
+	move.w	WinAff_Xsize(a0),d1
+	subq.w	#2,d1
+.copy	move.b	(a3)+,(a4)+
+	dbra	d1,.copy
+	clr.b	(a4)+
+	move.l	(a2),a2			;Noeud suivant
+	dbra	d0,.remp
+
+.s1	move.w	WinAff_Ysize(a0),d0	*---- Affichage ----------*
+	clr.l	d1
+	clr.l	d2
+	move.w	WinAff_Xpos(a0),d1
+	move.w	WinAff_Ypos(a0),d2
+	sub.w	#11,d2
+	lea	WinAff_StockASCII(a0),a2
+	move.w	WinAff_Xsize(a0),d3
+	subq.w	#1,d0
+.aff	tst.b	(a2)
+	beq.w	.alr
+	movem.l	d0-d3/a2,-(sp)
+	cmp.l	#"(Dad",(a2)
+	beq.s	.dir
+.file	TxtColor	#1,#3
+	bra.s	.ok
+.dir	TxtColor	#1,#2
+.ok	movem.l	(sp)+,d0-d3/a2
+	movem.l	d0-d3/a2,-(sp)
+	Print	a2,d1,d2
+	movem.l	(sp)+,d0-d3/a2
+	lea	(a2,d3.w),a2
+	add.l	#Font_height,d2
+	dbra	d0,.aff
+.alr		tst.l	Selected_file
+		beq.s	.end
+		move.l	Liste_aff,a0
+		move.l	Selected_FilePos,d0
+		bsr.w	Aff_LightRaster
+.end	rts
+.Searcherror				*---- erreurs...---*
+	move.l	#"SERC",d0
+	rts
+
+	*------- Efface la structure d'affichage -------*
+
+Remove_AffStruct	;a0=@Structure
+	move.l	a0,a1
+	move.l	4.w,a6
+	move.w	WinAff_Xsize(a1),d0
+	mulu.w	WinAff_Ysize(a1),d0
+	add.l	#14,d0
+	jsr	FreeMem(a6)
+	rts
+
+	*----Copiage d'une chaîne,avec [SPACE] à la place des 0-------*
+
+Copy_ASCIIChaine
+		;a4=@Source a5=@Destination d7=Taille Chaîne(NbrOctets-1)
+.copyN	move.b	(a4)+,d6
+	tst.b	d6
+	beq.s	.cc1
+	move.b	d6,(a5)+
+	dbra	d7,.copyN
+	rts
+.cc1	move.b	#" ",(a5)+
+	dbra	d7,.cc1
+	rts
+
+	*-------- Calcul la position de la barre de sélection ------*
+Search_RasterPos	;a0=@Struct_Aff  a1=@Struct_Liste
+			;resultat:  d0=N°Selected_File  a0=@Noeud sélectionné
+	movem.l	a0/a1,-(sp)
+	MousePos	d0,d1			*---Calcul position
+	move.l	(sp),a0
+	sub.w	WinAff_Ypos(a0),d1
+	divu.w	#Font_Height,d1			;d1=MouseCursePos
+	clr.l	d2
+	move.w	d1,d2
+	add.w	WinAff_CurseYpos(a0),d2		;d2=N°noeud du fichier pointé
+	move.l	d2,-(sp)
+
+	move.l	8(sp),a1		*---Compte les noeuds de la liste
+	clr.l	d3
+.cptr	move.l	(a1),a1
+	tst.l	(a1)
+	beq.s	.cend
+	addq.l	#1,d3
+	bra.s	.cptr
+.cend	cmp.w	d2,d3			;test s'il y a dépassement
+	bgt.s	.search
+	movem.l	(sp)+,d1/a0/a1
+	move.l	#"OVER",d0
+	rts
+.search	move.l	8(sp),a1		*---Cherche le fichier clické
+.s	move.l	(a1),a1
+	tst.l	(a1)
+	bne.s	.ok0
+	movem.l	(sp)+,d1/a0/a1
+	move.l	#"OVER",d0
+	rts
+.ok0	dbra	d2,.s
+	move.l	a1,-(sp)			;Sauvegarde @Noeud dans la pile
+	;move.l	8(sp),a0
+	;move.l	4(sp),d0
+	;bsr.s	Aff_LightRaster
+	move.l	(sp)+,a0
+	move.l	(sp)+,d0
+	movem.l	(sp)+,a1/a2
+	rts
+
+	*---------Affiche la barre de sélection --------------*
+Aff_LightRaster		;a0=@AffStruct d0=N°Selected_File
+	sub.w	WinAff_CurseYpos(a0),d0
+	bmi.s	.end
+	cmp.w	WinAff_Ysize(a0),d0
+	bge.s	.end
+	move.w	d0,d1
+	mulu.w	WinAff_Xsize(a0),d0
+	lea	WinAff_StockASCII(a0,d0.l),a1
+	tst.b	(a1)
+	bne.s	.ok0
+	clr.l	d0
+	rts
+.ok0	mulu.w	#Font_Height,d1
+	add.w	WinAff_Ypos(a0),d1
+	clr.l	d0
+	move.w	WinAff_Xpos(a0),d0
+	movem.l	a1/d0/d1,-(sp)
+	Txtcolor	#2,#0
+	movem.l	(sp)+,a2/d1/d2
+	sub.w	#11,d2
+	Print	a2,d1,d2
+	move.l	#" COK",d0
+.end	rts
+
+********************************************************
+*-------------------- Gestion Fichiers ----------------*
+********************************************************
+	*-------Structure FileInfoBlock ---*
+	st_FileInfoBlock=14
+	FileInfoBlock_size=260
+
+	FIB_DirEntryType=4
+	FIB_FileName=8
+	FIB_FileSize=124
+	FIB_Date=132
+	FIB_Comment=144
+
+	*-----Structure Id ASCII File (chaîne ASCII pour affichage F.I.B.)---*
+	st_IDASCII=ln_Name
+	IdASCII_st_size=8+1+108+1+8+1+5+1+116+1
+
+	IdASCII_FileSize=0
+	IdASCII_FileName=8+1
+	IdASCII_Date=8+1+108+1
+	IdASCII_Time=8+1+108+1+8+1
+	IdASCII_Comment=8+1+108+1+8+1+5+1
+
+	*----- Structure AffFileListe (affichage d'une liste de fichiers)
+	WinAff_Xpos=0
+	WinAff_Ypos=2
+	WinAff_Xsize=4
+	WinAff_Ysize=6
+	WinAff_CurseXpos=8
+	WinAff_CurseYpos=10
+	WinAff_StockASCII=12
+
+
+	*----Etabli la liste des fichiers du répertoire courant ----*
+
+Creat_ListeFiles	;a0=@Liste_FileInfoBlock d0=@Path Name
+	move.l	d0,a1
+	tst.b	(a1)
+	bne.s	.s
+	move.l	#Object_not_found,d0
+	rts
+.s	move.l	Dosbase,a6		*---Recherche du Lock
+	move.l	a0,-(sp)
+	move.l	d0,d1
+	moveq	#-2,d2
+	jsr	Lock(a6)
+	tst.l	d0
+	bne.s	.ok0
+	movem.l	(sp)+,a0
+	bra.w	File_error
+
+.ok0	move.l	d0,-(sp) ;Sauve @Lock	*---Allocation du 1er FileInfoBlock
+	bsr.w	Alloc_FileInfoBlock
+	cmp.l	#Insufficient_free_store,d0
+	bne.s	.ok1
+	movem.l	(sp)+,d1/a0
+	rts
+
+.ok1	move.l	d0,-(sp) ;Sauve @F.I.B.	*---Remplissage du premier F.I.B.
+	move.l	d0,First_FileInfoBlock
+	move.l	Dosbase,a6
+	move.l	4(sp),d1	;d1=@Lock
+	move.l	d0,d2
+	jsr	Examine(a6)
+	tst.l	d0
+	bne.s	.ok2
+	movem.l	(sp)+,d2/d1/a0
+	bra.w	File_error
+
+.ok2	move.l	(sp),a1 ;a1=@F.I.B.	*---Test la nature du Lock(Dir ou File)
+	tst.l	FIB_DirEntryType(a1)
+	bpl.s	.Ml1
+	movem.l	(sp)+,d1/d2/a0
+	move.l	4.w,a6
+	move.l	#FileInfoBlock_size,d0
+	jsr	FreeMem(a6)
+	move.l	#Object_not_of_required_type,d0
+	rts
+
+.Ml1	bsr.w	Alloc_FileInfoBlock	*---Allocation FileInfoBlock
+	cmp.l	#Insufficient_free_Store,d0
+	bne.s	.Ml2
+	movem.l	(sp)+,d2/d1/a0
+	rts
+
+.Ml2	move.l	(sp),a0 ;F.I.B. prec.	*---Remplissage du FileInfoBlock
+	move.l	d0,(sp) 		;Sauve @F.I.B.
+	move.l	d0,a1
+	move.w	#FileInfoBLock_Size-1,d1
+.copy	move.b	(a0)+,(a1)+		;copiage FIB prec. dans FIB courant.
+	dbra	d1,.copy
+	move.l	Dosbase,a6
+	move.l	4(sp),d1
+	move.l	(sp),d2
+	jsr	ExNext(a6)
+	tst.l	d0
+	bne.s	.Ml3
+	move.l	4.w,a6			;on efface la mémoire réservée 
+	move.l	(sp),a1			; inutilement...
+	move.l	#FileInfoBLock_Size,d0
+	jsr	FreeMem(a6)
+	bsr.s	.kill1
+	movem.l	(sp)+,d1/d0/a0		;d0=@Lock
+	RTS				;fini !
+
+.Ml3	move.l	8(sp),a0		*---Création d'un nouveau noeud
+	clr.l	d0			;diférencie Dirs et Files,
+	clr.l	d2			; pas (encore) de tri par ordre
+	move.l	(sp),a1			; alphabetique.
+	tst.l	FIB_DirEntryType(a1)
+	bmi.s	.file
+	moveq	#0,d1
+	bra.s	.c
+.file	moveq	#-1,d1
+.c	bsr.w	CreatNode
+	cmp.l	#Insufficient_free_store,d0
+	bne.s	.Ml4
+	movem.l	(sp)+,d2/d1/a0
+	rts
+
+.Ml4	move.l	d0,a0			*---Init du Noeud
+	move.l	(sp),st_FileInfoBlock(a0)
+	bsr.s	Creat_IdASCII_File
+	cmp.l	#Insufficient_free_Store,d0
+	bne.w	.Ml1			;Fichier suivant
+	movem.l	(sp)+,d2/d1/a0
+.kill1	move.l	4.w,a6
+	move.l	First_FileInfoBlock(pc),a1
+	move.l	#FileInfoBlock_Size,d0
+	jsr	FreeMem(a6)
+	rts
+
+First_FileInfoBLock	dc.l	0
+
+	*----Crée la chaîne ASCII pour affichage du FileInfoBlock.---*	
+
+Creat_IdASCII_File	;a0=@du noeud...
+
+	move.l	a0,-(sp)
+	move.l	4.w,a6			*--Allocation mémoire --*
+	move.l	#IdASCII_st_size,d0
+	move.l	#$10004,d1		;Recherche d'abord en Fast
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	move.l	#IdASCII_st_size,d0
+	move.l	#$10002,d1		;Si pas (assez) de Fast,alors
+	jsr	AllocMem(a6)		; on cherche en Chip...
+	bne.s	.ok
+	move.l	(sp)+,a0
+	move.l	#Insufficient_Free_store,d0
+	rts
+
+.ok	move.l	(sp)+,a1		*--Stockage @ ---*
+	move.l	d0,st_IdASCII(a1)		;Stockage @
+	move.l	st_FileInfoBlock(a1),a0		;a0=@FileInfoBlock
+	move.l	d0,a1				;a1=@FileIdASCIIChaine
+
+	tst.l	FIB_DirEntryType(a0)		*--Init FileSize--*
+	bpl.s	.Dir
+	lea	AlphaNumerique,a2	;Convertion AlphaNum.==>ASCII
+	lea	IdASCII_FileSize(a1),a3
+	move.l	FIB_FileSize(a0),d0
+	moveq	#28,d1
+	moveq	#6,d2
+.search	move.l	d0,d3			;Recherche le premier chiffre
+	lsr.l	d1,d3			;du nombre...met un espace
+	and.w	#$f,d3			;à la place des 0 du début...
+	bne.s	.found
+	subq.w	#4,d1
+	move.b	#" ",(a3)+
+	dbra	d2,.search
+	move.l	d0,d3			;Size<16
+	and.w	#$f,d3
+.found	addq.w	#1,d2			;...Une fois le début trouvé,
+.b	move.b	(a2,d3.w),d3		;on converti chaque unité
+	move.b	d3,(a3)+		;AlphaNumérique en valeur
+	move.l	d0,d3			;ASCII.
+	subq.w	#4,d1			;(La convertion en décimal est
+	lsr.l	d1,d3			;Le résultat visuel sera
+	and.w	#$f,d3			;donné en alphanumérique.
+	dbra	d2,.b			;pas pour tout de suite...)
+	bra.s	.Name
+
+.Dir	move.l	#"(Dad",IdASCII_FileSize(a1)	;Si c'est un directory,
+	move.l	#"dy) ",IdASCII_FileSize+4(a1)	; on inscrit "(Daddy)"
+
+.Name	move.b	#" ",IdASCII_Filename-1(a1)	*--Init FileName--*
+	Lea	FIB_FileName(a0),a4
+	Lea	IdASCII_FileName(a1),a5
+	moveq	#107,d7
+	bsr.w	Copy_ASCIIChaine
+
+.Time	moveq	#14,d0
+	lea	IdASCII_Date(a1),a2
+	move.b	#" ",-1(a2)
+.esp	move.b	#" ",(a2)+
+	dbra	d0,.esp
+
+.Coment	move.b	#" ",IdASCII_Comment-1(a1)	*--Init Comment--*
+	Lea	FIB_Comment(a0),a4
+	Lea	IdASCII_Comment(a1),a5
+	moveq	#115,d7
+	bsr.w	Copy_ASCIIChaine
+	clr.l	d0
+	rts
+
+	*----Libère la mémoire occupée par les structures fichiers ----*
+
+Clear_FileInfoBlocks	;a0=@Liste FileInfoBlocks
+	move.l	4.w,a6
+	move.l	(a0),a1
+.c	tst.l	(a1)
+	beq.s	.end
+	movem.l	a0/a1,-(sp)
+	move.l	ln_name(a1),a1
+	cmp.l	#0,a1
+	beq.s	.c2
+	move.l	#IdASCII_st_size,d0
+	jsr	FreeMem(a6)
+.c2	movem.l	(sp),a0/a1
+	move.l	st_FileInfoBlock(a1),a1
+	move.l	#FileInfoBlock_size,d0
+	jsr	FreeMem(a6)
+	movem.l	(sp)+,a0/a1
+	move.l	(a1),a1
+	bra.s	.c
+.end	rts
+
+
+	*------ Alloue la mémoire pour un FileInfoBlock
+
+Alloc_FileInfoBlock	;d0 renvoie @FileInfoBlock (ou erreur "AFIB")
+	move.l	4.w,a6
+	move.l	#FileInfoBlock_Size,d0
+	move.l	#$10004,d1
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	move.l	#FileInfoBlock_Size,d0
+	move.l	#$10002,d1
+	jsr	AllocMem(a6)
+	bne.s	.ok
+	move.l	#Insufficient_free_store,d0
+.ok	rts
+
+
+	*------ Renvoie le code d'erreur DOS ------*
+
+File_error
+ 	move.l	Dosbase,a6
+	jsr	IoErr(a6)
+	rts
+
+*********************************************************
+*		Gestion des chaînes			*
+*********************************************************
+
+
+Merge_strings		;a0=First string a1=Second String
+			;resultat: d0=@New_string d1=NewString_Size
+	movem.l	a0/a1,-(sp)		*---Calcul taille PathWay$+Filename$
+	clr.l	d0
+.Pcpt	tst.b	(a0)+
+	beq.s	.Finit
+	addq.l	#1,d0
+	bra.s	.Pcpt
+.Finit	move.l	4(sp),a0		;a0=@Second String
+.Fcpt	tst.b	(a0)+
+	beq.s	.allc
+	addq.l	#1,d0
+	bra.s	.Fcpt
+.allc	addq.l	#2,d0			;le 0 de fin,plus un éventuel "/"
+	move.l	d0,-(sp)		;sauvegarde NewString_Size
+	move.l	4.w,a6
+	move.l	#$10004,d1
+	jsr	AllocMem(a6)
+	bne.s	.Mfnd
+	move.l	(sp),d0
+	move.l	#$10002,d1
+	jsr	AllocMem(a6)
+	beq.w	.AllocErr
+.Mfnd	move.l	d0,-(sp)	;sauvegarde @New_string
+	move.l	d0,a0		*---Merge PathWay$+FileName$
+	move.l	8(sp),a1	;a1=@First string
+.cPath	tst.b	(a1)
+	beq.s	.icFile
+	move.b	(a1)+,(a0)+
+	bra.s	.cPath
+.icFile	cmp.b	#"/",-1(a1)
+	beq.s	.noas
+	cmp.b	#":",-1(a1)
+	beq.s	.noas
+	move.b	#"/",(a0)+
+.noas	move.l	12(sp),a1	;a1=@Second string
+.cFile	tst.b	(a1)
+	beq.s	.end
+	move.b	(a1)+,(a0)+
+	bra.s	.cFile
+.end	move.l	(sp)+,d0	;d0=@New_String
+	move.l	(sp)+,d1	;d1=NewString_size
+	move.l	(sp)+,a0	;a0=@First string
+	move.l	(sp)+,a1	;a1=@Second string
+	rts
+
+.AllocErr
+	movem.l	(sp)+,d1-d3
+	move.l	#Insufficient_free_store,d0
+	rts
+
+*************************************************************************
+*			Gestion des requesters				*
+*************************************************************************
+;		E®k/INTENSE 20/8/1997 (avec la fonction "Delete")
+
+Request_ta_mere		;a0=@Struct_Requester
+	move.l	a0,-(sp)
+	move.l	intuibase,a6
+	lea	request_win,a0
+	move.l	(sp),a1
+	move.l	SkrinH,Win_Screen(a0)
+	move.w	Req_WinXpos(a1),Win_Xpos(a0)
+	move.w	Req_WinYpos(a1),Win_Ypos(a0)
+	move.w	Req_WinXsize(a1),Win_Xsize(a0)
+	move.w	Req_WinYsize(a1),Win_Ysize(a0)
+	move.l	Req_WinName(a1),Win_name(a0)
+	jsr	OpenWindow(a6)
+	tst.l	d0
+	beq.s	Er_OpenReq
+	move.l	Winh,Old_Winh
+	move.l	d0,Winh
+	move.l	(sp)+,a0
+	move.l	Ecran,Old_Ecran
+	move.l	Req_CaseListe(a0),Ecran
+	bsr.w	Coucoudesign
+	bra.w	Salut_ralfy
+
+End_request
+	move.l	Old_Ecran,Ecran
+	move.l	intuibase,a6
+	move.l	WinH,a0
+	jsr	CloseWindow(a6)
+	move.l	Old_Winh,Winh
+	rts
+
+	*--------- Erreur dans le request -------*
+Er_OpenReq
+	move.l	(sp)+,a0
+	move.l	#"RQST",d0
+	rts
+*************************************************************************
+*			Petits grpahismes				*
+*************************************************************************
+coucoudesign
+	txtcolor	#3,#1
+	move.l	Ecran,a2
+zaff	move.l	(a2)+,a3
+	cmp.l	#0,a3
+	beq.w	zfin
+zcases	cmp.b	#0,Def(a3)
+	bne.w	zwins
+	PrintCase	a3,2,1,3,1
+	bra.w	zaff
+zwins	cmp.b	#1,Def(a3)
+	bne.w	zpotars
+	Swindow		a3,1,3,2
+	bra.w	zaff
+zpotars	cmp.b	#2,Def(a3)
+	bne.w	ztitles
+	Potar		a3,3,2,1
+	bra.w	zaff
+ztitles	cmp.b	#3,Def(a3)
+	bne.w	zaff
+	PrintCase	a3,2,1,3,2
+	bra.w	zaff
+zfin	rts
+
+*************************************************************************
+*	On sort le mouchoir blanc....et on l'agite...snif...adieu...	*
+*************************************************************************
+Va_voir_chez_babarre
+	move.l	Liste_Aff,a0
+	bsr.w	Remove_AffStruct
+ErrorAffStruct
+	move.l	FileInfoBlock_Liste,a0
+	bsr.w	Clear_FileInfoBlocks
+	bsr.w	RemoveListe
+ErrorFileInfoBlockListe
+	move.l	Intuibase,a6
+	move.l	Winh,a0
+	jsr	CloseWindow(a6)
+ErrorSpriteInit
+ErrorWin
+	move.l	Intuibase,a6
+	move.l	SkrinH,a0
+	jsr	CloseScreen(a6)
+ErrorSkrin
+	Closelib	Dosbase
+error4
+	Closelib	Mathffpbase
+error3
+	Closelib	Mathbase
+error2
+	Closelib	GfxBase
+error1
+	Closelib	IntuiBase
+error0
+	clr.l	d0
+	RTS
+
+*************************************************
+*	EN ATTENTE				*
+*************************************************
+own_pset_init
+	move.l	winh,a0
+	move.l	50(a0),a0
+	move.l	4(a0),a0
+	move.l	8+4(a0),a0	;a0=@ écran de la fenêtre
+	lea	X_tab,a1
+	lea	Y_tab,a2
+	rts
+Own_pset	;a0=@bitmap a1=Xtab a2=Ytab d0=X d1=Y
+	move.w	(a2,d1.w*2),d1
+	add.w	(a1,d0.w*4),d1
+	move.b	3(a1,d0.w*4),d0
+	or.b	d0,(a0,d1.w)
+	rts
+
+X_tab
+x	set	0
+	rept	80
+	dc.w	x,$80,x,$40,x,$20,x,$10,x,8,x,4,x,2,x,1
+x	set	x+1
+	endr
+y_tab
+y	set	0
+	rept	256
+	dc.w	y
+y	set	y+80
+	endr
+*************************************************************************
+*				Données					*
+*************************************************************************
+			section	donnees,data
+
+Sprite0		dc.l	0
+XMouse		dc.w	0
+YMouse		dc.w	0
+ColorMap	dc.l	0
+
+	*------- Size node types -----------------------*
+types_table
+	dc.l	NodeSize+4
+
+	*----Données pour gestion des fichiers----*
+	PathWay_BuffSize=256+1	;le 0 de fin de chaine en plus...
+	FileName_BuffSize=107+1
+Selected_FilePos	dc.l	0
+Selected_File		dc.l	0	;@ du noeud du fichier selectionné
+Liste_aff		dc.l	0
+NbrFiles		dc.l	0
+Lock_ptr		dc.l	0
+FileInfoBlock_Liste	dc.l	0
+Path			blk.b	PathWay_BuffSize,0
+Path_buff		blk.b	PathWay_BuffSize,0
+FileName		blk.b	FileName_BuffSize,0
+FileNameBuff		blk.b	FileName_BuffSize,0
+WayFile			dc.l	0
+WayFile_size		dc.l	0
+not_a_dir		dc.b	"!Crazzy SUCKER,no file name HERE !",0
+unknown_Path		dc.b	" ! Unknown path.Sorry silly boy ! ",0
+Insert_disk		dc.b	"  ! Device not mounted,STUPID !   ",0
+no_memory_left		dc.b	"! Er...Sorry,not enough memory :(!",0
+Buffer_OverFlow		dc.b	"!Buffer OVERFLOW..PathWay too big!",0
+	even
+
+
+	*-------- Clavier -----------*
+Alphanumerique	dc.b	"0123456789ABCDEF"	*----Sert pour les convertions
+		even				*----en ASCII
+
+Curse_Pos	dc.w	0	*----Sert Pour PathWay
+Curseur		dc.w	0	
+Marge_left	dc.w	0
+
+Liste_Xpos	dc.w	0	*----Sert pour la liste des fichiers
+Liste_Ypos	dc.w	0
+ListeMarge_left	dc.w	0
+ListeMarge_Top	dc.w	0
+
+KeyVectors_table
+	dc.l	Amiga_right_r,Amiga_right,Amiga_left_r,Amiga_left
+	dc.l	Alt_right_r,Alt_right,Alt_left_r,Alt_left
+	dc.l	Ctrl_r,Ctrl,CapsLock_r,CapsLock
+	dc.l	Shift_right_r,Shift_right,Shift_left_r,Shift_left
+Seize_Vectors_table
+	dc.l	Dep_left,Dep_right,Seizing,Seizing,Dep_Del,Escape_Seizing
+	dc.l	End_Seizing,End_Seizing,Seizing,Dep_Bspace,Help_Seize
+Board_Flags	dc.b	0
+Table_Clavier1						;Codes CIA:
+	dc.b	Help,"+*/]["					;65-75
+	dc.b	F10,F9,F8,F7,F6,F5,F4,F3,F2,F1			;77-95
+	dc.b	Fl_left,Fl_right,Fl_bottom,Fl_top 		;97-103
+	dc.b	" -   "						;105-113
+	dc.b	Del,Esc,AlphaENTER,NumENTER,Tab,BackSpace," "	;115-127
+	dc.b	"987. "						;129-137
+	dc.b	"=:;,nbvcxw<654 "				;139-167
+	dc.b	"µùmlkjhgfdsq321 "				;169-199
+	dc.b	"$ poiuytreza0 "				;201-227
+	dc.b	"\-)àç!è§('",34,"é&`"				;229-255
+
+Table_Clavier2		;+SHIFT
+	dc.b	Help,"+*/}{"					;65-75
+	dc.b	F10,F9,F8,F7,F6,F5,F4,F3,F2,F1			;77-95
+	dc.b	Fl_left,Fl_right,Fl_bottom,Fl_top	 	;97-103
+	dc.b	" -   "						;105-113
+	dc.b	Del,Esc,AlphaENTER,NumENTER,Tab,BackSpace," "	;115-127
+	dc.b	"^#7. "						;129-137
+	dc.b	"+/.?NBVCXW>654 "				;139-167
+	dc.b	"£%MLKJHGFDSQ321 "				;169-199
+	dc.b	"* POIUYTREZA0 "				;201-227
+	dc.b	"|_°0987654321~"				;229-255
+
+Table_Clavier3		;+ALT
+	dc.b	Help,"+*/]["					;65-75
+	dc.b	F10,F9,F8,F7,F6,F5,F4,F3,F2,F1			;77-95
+	dc.b	Fl_left,Fl_right,Fl_bottom,Fl_top	 	;97-103
+	dc.b	" -   "						;105-113
+	dc.b	Del,Esc,AlphaENTER,NumENTER,Tab,BackSpace," "	;115-127
+	dc.b	"987. "						;129-137
+	dc.b	"/.,¸­ºªç×±<654 "				;139-167
+	dc.b	"µ';£     ðßæ321 "				;169-199
+	dc.b	"][¶ø¡µ¤þ®©°å0 "				;201-227
+	dc.b	"\=-»«·¾½¼¢³²¹`"				;229-255
+	even
+*---------------- données programmeur (moi quoi...héhé)--------------*
+
+fuck_ou_pas_fuck	dc.l	0
+gros_caca		dc.l	0
+enorme_merde		dc.l	0
+
+*--------------- Remplissage des objets fenêtres  -------------------*
+fill		dcb.b	80,32
+		dc.b	0
+		even
+
+*------------------- Ecrans --------------------------------*
+Ecran		dc.l	Cases_1
+Old_Ecran	dc.l	0
+
+	*--------- Ecran principal ---------------*
+Ecran_1
+Cases_1		dc.l	Quit,Sleepmode,DiskOp	;def=0
+
+windz_1		dc.l	0			;def=1
+
+Potars_1	dc.l	0			;def=2
+
+Titles_1	dc.l	0			;Def=3
+
+
+	*-------- Gestionnaire fichiers ----------*
+Ecran_2
+
+Titles_2	dc.l	FileTitle,PathTitle			;Def=3
+
+Cases_2		dc.l	Exit,PathWay,ListeRight,ListeLeft	;def=0
+		dc.l	ParentDir,FileSelected,DeleteFichier
+		dc.l	LoadFile,SaveFile
+
+windz_2		dc.l	FilesListeNames				;def=1
+
+Potars_2	dc.l	ListePos				;def=2
+
+		dc.l	0
+*------------------ Objets fenêtres --------------------------------*
+	;format win: Def.b,Xpos.w,Ypos.w,Xsize.w,Ysize.w,Vecteur.l,Hotkey.w
+
+
+	*--------Gestionnaire fichiers ---------*
+FilesListeNames
+	dc.w	$0100
+	dc.w	324,23,312,224
+	dc.l	FilesListe_Names
+	dc.w	0
+	
+*------------------ Objets Potar ------------------------------------*
+	;Format potars: Def,Xpos,Ypos,Xlenght,Ylenght,Vecteur,Hotkey
+	;		Vmin,Vmax,Curspos,LastScrPos
+	;		DataCase,nLeft,nRight <==pour affichage datas
+
+ListePos	dc.w	$0200
+		dc.w	290,22,32,225
+		dc.l	Liste_Pos
+		dc.w	0
+		dc.l	0,1,1
+		dc.w	11+9
+		dc.l	0,0
+*------------------ Objets titres -----------------------------------*
+	;Format objets: Def,Xpos,Ypos,Xlenght,Ylenght,Vecteur,hotkey,texte,0
+
+FileTitle
+	dc.w	$0300
+	dc.w	0,22,8*6+1,9
+	dc.l	0
+	dc.w	0
+	dc.b	"File: ",0
+	even
+PathTitle
+	dc.w	$0300
+	dc.w	324,12,8*5+1,9
+	dc.l	0
+	dc.w	0
+	dc.b	"Path:",0
+
+
+*--------------- Objets Cliquables...---------------------------------*
+
+	*-------Ecran principal--------*
+Quit	dc.w	0
+	dc.w	0,12,8*4+1,9
+	dc.l	Kiquitte
+	dc.w	Esc
+	dc.b	"Quit",0
+	even
+Sleepmode
+	dc.w	0
+	dc.w	35,12,8*4+1,9
+	dc.l	Sleep_mode
+	dc.w	F1
+	dc.b	"zZZz",0
+	even
+DiskOp
+	dc.w	0
+	dc.w	70,12,8*8+1,9
+	dc.l	Disk_Op
+	dc.w	"ð"		;ALT+d
+	dc.b	"Disk Op.",0
+	even
+
+	*--------- Gestionnaire fichiers ------------*
+Exit	dc.w	0
+	dc.w	0,12,8*4+1,9
+	dc.l	Ekssite
+	dc.b	0,Esc
+	dc.b	"Exit",0
+	even
+PathWay
+	dc.w	0
+	dc.w	365,12,8*34+1,9
+	dc.l	Path_Way
+	dc.w	"±"		;ALT+w
+	blk.b	34,32
+	dc.b	0
+	even
+ListeLeft
+	dc.w	0
+	dc.w	306,12,8*2+1,9
+	dc.l	Liste_Left
+	dc.w	Fl_Right
+	dc.b	"->",0
+	even
+ListeRight
+	dc.w	0
+	dc.w	288,12,8*2+1,9
+	dc.l	Liste_Right
+	dc.w	Fl_Left
+	dc.b	"<-",0
+	even
+ParentDir
+	dc.w	0
+	dc.w	213,12,8*9+1,9
+	dc.l	Parent_dir
+	dc.w	"¶"
+	dc.b	" Mummies ",0
+FileSelected
+	dc.w	0
+	dc.w	47,22,8*30+1,9
+	dc.l	File_Selected
+	dc.w	"ß"
+	blk.b	30," "
+	dc.b	0
+	even
+DeleteFichier
+	dc.w	0
+	dc.w	0,52,8*11+1,9
+	dc.l	Delete_Fichier
+	dc.w	"ð"
+	dc.b	"Delete file",0
+	even
+LoadFile
+	dc.w	0
+	dc.w	0,32,8*11+1,9
+	dc.l	Load_File
+	dc.w	"ð"
+	dc.b	" Load file ",0
+	even
+SaveFile
+	dc.w	0
+	dc.w	0,42,8*11+1,9
+	dc.l	Save_File
+	dc.w	"ð"
+	dc.b	" Save file ",0
+	even
+
+*------------------- Structures Request ---------------------*
+;Struct_Requester:
+;	WinXpos(W),WinYpos(W),WinXsize(W),WinYsize(W)
+;	@Window_name(@PTR),User_Message(LW),@Cases_Liste(@PTR)
+
+Confirm_deletion
+	dc.w	0,0
+	dc.w	226,40
+	dc.l	delname
+	dc.l	0
+	dc.l	Deletion_liste
+
+Deletion_liste
+	dc.l	DelMessy,OhNo,YeahMan,0
+
+DelMessy
+	dc.w	$0300
+	dc.w	4,1,8*27+1,9
+	dc.l	0
+	dc.w	0
+delname	dc.b	"He! Sure you wanna delete ?",0
+	even
+
+OhNo	dc.w	0
+	dc.w	40,20,8*6+1,9
+	dc.l	OH_no
+	dc.w	"n"
+	dc.b	"Ooops!",0
+	even
+
+YeahMan	dc.w	0
+	dc.w	130,20,8*6+1,9
+	dc.l	Yeah_Man
+	dc.w	"y"
+	dc.b	"Yeeah!",0
+	even
+
+*****************************************************************
+*--------------- Structures Intuition ----------------------	*
+*****************************************************************
+	WinH_Xpos=4
+	WinH_Ypos=6
+
+	Win_Xpos=0
+	Win_Ypos=2
+	Win_Xsize=4
+	Win_Ysize=6
+	Win_IDCMP_Flags=10
+	Win_Flags=14
+	Win_Name=26
+	Win_Screen=30
+	Win_XsizeMin=38
+	Win_YSizeMin=40
+	Win_XSizeMax=42
+	Win_YSizeMax=44
+
+	HIRES=$8000
+	LACE=$4
+	SPRITES=$400
+
+	CUSTOMSCREEN=1
+	CUSTOMBITMAP=2
+	SCREENQUIET=4
+
+	CUSTOMSIZE=$1
+	MOVEABLE=$2
+	BACKFOREWARD=$4
+	CLOSEGADGET=$8
+	BACKDROP=$100
+	BORDERLESS=$800
+	ACTIVATE=$1000
+
+Skrin	dc.w	0,0		;x,y START
+	dc.w	640,256 	;x,y SIZE
+	dc.w	3		;Depth
+	dc.b	1,1		;Couleurs curseur
+	dc.w	HIRES		;HIRES/LACE/SPRITES
+	dc.w	1		;CUSTOMSCREEN/CUSTOMBITMAP/SCREENQUIET
+	dc.l	0		;@Font
+	dc.l	NomSkrin
+	dc.l	0		;@Gadgets
+	dc.l	0		;CustomBitmap@
+
+windoche
+	dc.w	0,0	;x,y START				;0
+	dc.w	640,256	;x,y SIZE				;4
+	dc.b	0,0	;couleur caractères,font		;8
+	dc.l	$408	;IDCMP-Flags	(**) (messages accordés);10
+	dc.l	ACTIVATE!BACKDROP!BORDERLESS	;(*)		;14
+	dc.l	0	;graphic				;18
+	dc.l	0	;cellule				;22
+	dc.l	MonNom
+	dc.l	0	;@ écran
+	dc.l	0	;@ bitmap
+	dc.w	100,5	;largeur,hauteur min.
+	dc.w	640,256 ; "	   "	 max.
+	dc.w	1	;type d'écran
+
+;IDCMP-Flags(**):
+;	$00008=bouton gauche
+;	$00010=move mouse
+;	$00200=cellule fermeture
+;	$00400=accès clavier
+;	$08000=disk inserted
+;	$10000=disk removed
+;
+;
+;Flags(*):
+;	$1000=ACTIVATE
+;	$0001=taille modifiable
+;	$0002=déplacement
+;	$0004=avant-arrière plan
+;	$0008=cellule fermeture
+
+Text_struct
+	dc.b	1,2	;couleur
+	dc.b	5,0	;mode (couleur?) , dummy
+	dc.w	3,12	;Xpos,Ypos (10,13)
+	dc.l	0
+	dc.l	0	;@ là où est le texte à afficher.
+	dc.l	0
+
+
+Request_win
+	dc.w	0,0	;x,y START				;0
+	dc.w	0,0	;x,y SIZE				;4
+	dc.b	0,0	;couleur caractères,font		;8
+	dc.l	$408	;IDCMP-Flags	(**) (messages accordés);10
+	dc.l	ACTIVATE!MOVEABLE		;(*)		;14
+	dc.l	0	;graphic				;18
+	dc.l	0	;cellule				;22
+	dc.l	0
+	dc.l	0	;@ écran
+	dc.l	0	;@ bitmap
+	dc.w	10,10	;largeur,hauteur min.
+	dc.w	640,256 ; "	   "	 max.
+	dc.w	1	;type d'écran
+
+
+
+*----------------- variables ---------------------------------
+winH		dc.l	0
+Old_WinH	dc.l	0
+SkrinH		dc.l	0
+NomSkrin	dc.b	"« Je suis z'un AMIGA...Moi très gentil... »",0
+MonNom		dc.b	"E®k/INTENSE",0
+		even
+
+*************************************************************************
+*			Données Système					*
+*************************************************************************
+Tion_IntuiTion	dc.b	"intuition.library",0
+	even
+Gfx_name	dc.b	"graphics.library",0
+	even
+Mathname	dc.b	"mathtrans.library",0
+	even
+Mathffpname	dc.b	"mathffp.library",0
+	even
+Dosname		dc.b	"dos.library",0
+	even
+IntuiBase	dc.l	0
+GfxBase		dc.l	0
+Mathbase	dc.l	0
+Mathffpbase	dc.l	0
+Dosbase		dc.l	0

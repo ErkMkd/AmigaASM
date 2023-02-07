@@ -1,0 +1,15 @@
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+;	Method...:	insert				15/4/1998
+;	IN.......: a0=@nodeSuiv , a1=@node
+;	OUT......: -
+;	ERRORS...: -
+;¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+Kernel.insert
+		move.l	a6,-(sp)
+		move.l	nd_prec(a0),a6
+		move.l	a1,nd_suiv(a6)
+		move.l	a1,nd_prec(a0)
+		move.l	a0,nd_suiv(a1)
+		move.l	a6,nd_prec(a1)
+		move.l	(sp)+,a6
+		rts
